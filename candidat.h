@@ -1,0 +1,60 @@
+#ifndef CANDIDAT_H
+#define CANDIDAT_H
+
+#include <QString>
+#include <QDate>
+#include <QSqlQueryModel>
+#include <QSqlQuery>
+#include <QVariant>
+
+
+class Candidat
+{
+public:
+    // Constructor
+    Candidat(int id, QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, QString telephone);
+    Candidat( QString nom,  QString prenom,  QString email,  QString cin,  QDate dateNaissance,  QString telephone);
+    Candidat();
+        bool create(); // Create a new Candidat
+        QSqlQueryModel* readAll(); // Read all Candidats
+        bool update(int id); // Update Candidat by ID
+        bool remove(int id); // Delete Candidat by ID
+        QSqlQueryModel* rechercher(QString NOM);
+        QSqlQueryModel* tri();
+
+
+
+    // Getters and setters
+    int getId() const;
+    void setId(int id);
+
+    QString getNom() const;
+    void setNom(const QString &nom);
+
+    QString getPrenom() const;
+    void setPrenom(const QString &prenom);
+
+    QString getEmail() const;
+    void setEmail(const QString &email);
+
+    QDate getDateNaissance() const;
+    void setDateNaissance(const QDate &date);
+
+    QString getTelephone() const;
+    void setTelephone(const QString &telephone);
+
+    QString getCIN() const;
+    void setCIN(const QString &cin);
+
+private:
+    int id;
+    QString nom;
+    QString prenom;
+    QString email;
+    QDate dateNaissance;
+    QString telephone;
+    QString cin;
+
+};
+
+#endif // CANDIDAT_H
