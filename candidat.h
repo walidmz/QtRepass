@@ -17,10 +17,13 @@ public:
     Candidat();
         bool create(); // Create a new Candidat
         QSqlQueryModel* readAll(); // Read all Candidats
-        bool update(int id); // Update Candidat by ID
+        bool update(int id ); // Update Candidat by ID
         bool remove(int id); // Delete Candidat by ID
         QSqlQueryModel* rechercher(QString NOM);
-        QSqlQueryModel* tri();
+        QSqlQueryModel* triNom();
+        QSqlQueryModel* triID();
+        QSqlQueryModel* triDate();
+
 
 
 

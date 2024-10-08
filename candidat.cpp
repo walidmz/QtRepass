@@ -10,6 +10,35 @@
 Candidat::Candidat() : id(0) {}
 Candidat::Candidat(QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, QString telephone ):
     nom(nom), prenom(prenom), email(email), cin(cin), dateNaissance(dateNaissance), telephone(telephone) {}
+// Setter for 'nom'
+void Candidat::setNom(const QString &nom) {
+    this->nom = nom;
+}
+
+// Setter for 'prenom'
+void Candidat::setPrenom(const QString &prenom) {
+    this->prenom = prenom;
+}
+
+// Setter for 'email'
+void Candidat::setEmail(const QString &email) {
+    this->email = email;
+}
+
+// Setter for 'dateNaissance'
+void Candidat::setDateNaissance(const QDate &date) {
+    this->dateNaissance = date;
+}
+
+// Setter for 'telephone'
+void Candidat::setTelephone(const QString &telephone) {
+    this->telephone = telephone;
+}
+
+// Setter for 'cin'
+void Candidat::setCIN(const QString &cin) {
+    this->cin = cin;
+}
 
 
 
@@ -35,9 +64,14 @@ bool Candidat::create() {
 // Read all Candidats
 QSqlQueryModel* Candidat::readAll() {
     QSqlQueryModel *model = new QSqlQueryModel();
-    QSqlQuery query("SELECT * FROM Candidat");
-    query.exec();
-    model->setQuery(query);
+    QSqlQuery query;
+
+    if (!query.exec("SELECT * FROM Candidat")) {
+        qDebug() << "Error executing query:" << query.lastError().text();
+    } else {
+        model->setQuery(query);
+    }
+
     return model;
 }
 
@@ -60,7 +94,7 @@ bool Candidat::update(int id) {
     return true;
 }
 
-// Delete Candidat by ID
+// Delete Candidat by CIN
 bool Candidat::remove(int id) {
     QSqlQuery query;
     query.prepare("DELETE FROM Candidat WHERE id = :id");
@@ -81,10 +115,24 @@ QSqlQueryModel* Candidat::rechercher(QString NOM)
             model->setQuery(recher);
             return model;
 }
-QSqlQueryModel* Candidat::tri()
+QSqlQueryModel* Candidat::triNom()
 {
     QSqlQueryModel * model= new QSqlQueryModel();
                model->setQuery("SELECT * FROM CANDIDAT ORDER BY NOM");
+               return model;
+}
+
+QSqlQueryModel* Candidat::triID()
+{
+    QSqlQueryModel * model= new QSqlQueryModel();
+               model->setQuery("SELECT * FROM CANDIDAT ORDER BY ID");
+               return model;
+}
+
+QSqlQueryModel* Candidat::triDate()
+{
+    QSqlQueryModel * model= new QSqlQueryModel();
+               model->setQuery("SELECT * FROM CANDIDAT ORDER BY DATENAISSANCE");
                return model;
 }
 

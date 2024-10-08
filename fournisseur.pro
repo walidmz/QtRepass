@@ -1,5 +1,9 @@
 QT       += core gui sql printsupport
 QT       += core gui charts #-----satistiques
+QT       += core gui sql multimedia multimediawidgets
+QT       += network
+
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT+= sql
 
@@ -17,36 +21,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    addteacher.cpp \
     candidat.cpp \
     connection.cpp \
-    fournisseur.cpp \
     gestion_candidats.cpp \
-    gestion_fournisseur.cpp \
-    gestion_teacher.cpp \
     main.cpp \
-    mainwindow.cpp \
-    offreEmploi.cpp \
-    teacher.cpp
+    offreEmploi.cpp
 
 HEADERS += \
-    addteacher.h \
     candidat.h \
     connection.h \
-    fournisseur.h \
     gestion_candidats.h \
-    gestion_fournisseur.h \
-    gestion_teacher.h \
-    mainwindow.h \
-    offreEmploi.h \
-    teacher.h
+    offreEmploi.h
 
 FORMS += \
-    addteacher.ui \
-    gestion_candidats.ui \
-    gestion_fournisseur.ui \
-    gestion_teacher.ui \
-    mainwindow.ui
+    gestion_candidats.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -15,14 +15,40 @@
 #include<QtCharts>
 #include<QChartView>
 
+
+
 gestion_candidats::gestion_candidats(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::gestion_candidats)
 {
     ui->setupUi(this);
-        ui->tableView->setModel((candidat.readAll()));
+        ui->tableView_candidats->setModel((candidat.readAll()));
         // Connect the button signal to the slot
         connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(on_pushButton_clicked()));
+        connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
+        connect(ui->btn_modifier_candidat, SIGNAL(clicked()), this, SLOT(on_Modifier_clicked()));
+        connect(ui->btn_supprimer_candidat, SIGNAL(clicked()), this, SLOT(on_Supprimer_clicked()));
+        connect(ui->btn_recherche, SIGNAL(clicked()), this, SLOT(on_recherche_clicked()));
+        connect(ui->btn_tri_nom, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_nom_clicked()));
+        connect(ui->btn_tri_id, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_id_clicked()));
+        connect(ui->btn_tri_date, SIGNAL(clicked()), this, SLOT(on_tri_date_clicked()));
+        connect(ui->btn_imprimer_candidat,SIGNAL(clicked()),this,SLOT(on_inprimer_clicked()));
+        connect(ui->btn_statistique_candidat,SIGNAL(clicked()),this,SLOT(on_statistique_clicked()));
+        connect(ui->btn_start_camera,SIGNAL(clicked()),this,SLOT(on_btn_start_camera_clicked()));
+        connect(ui->btn_stop_camera,SIGNAL(clicked()),this,SLOT(on_btn_stop_camera_clicked()));
+        connect(ui->Ajouter,SIGNAL(clicked()),this,SLOT(on_sendEmailButton_clicked()));
+
+
+        for(const QCameraInfo &infor : QCameraInfo::availableCameras())
+        {
+            qDebug() << infor.description();
+        }
+
+        M_Camera.reset(new QCamera(QCameraInfo::defaultCamera()));
+        M_Camera->setViewfinder(ui->camera_view);
+
+
+
 
 }
 
@@ -44,7 +70,7 @@ void gestion_candidats::on_Ajouter_clicked()
    bool test=candidat.create();
    if(test)
        {
-           ui->tableView->setModel((candidat.readAll()));
+           ui->tableView_candidats->setModel((candidat.readAll()));
           QMessageBox::information(nullptr,QObject::tr("OK"),
                                    QObject::tr("Ajout effectué\n"
                                                "Click Cancel to exit."),QMessageBox::Cancel);
@@ -54,7 +80,7 @@ void gestion_candidats::on_Ajouter_clicked()
                                        QObject::tr("Ajout non effectué\n"
                                                  "Click Cancel to exit."),QMessageBox::Cancel);
 
-         ui->lineEdit_CIN->clear();
+         ui->lineEdit_EMAIL->clear();
          ui->lineEdit_NOM->clear();
          ui->lineEdit_PRENOM->clear();
          ui->lineEdit_EMAIL->clear();
@@ -63,22 +89,23 @@ void gestion_candidats::on_Ajouter_clicked()
 }
 void gestion_candidats::on_tableView_activated(const QModelIndex &index)
 {
-
-                   ui->lineEdit_CIN_2->setText(ui->tableView->model()->data(ui->tableView->model()->index(index.row(),0)).toString());
-                   ui->lineEdit_NOM_2->setText(ui->tableView->model()->data(ui->tableView->model()->index(index.row(),1)).toString());
-                   ui->lineEdit_PRENOM_2->setText(ui->tableView->model()->data(ui->tableView->model()->index(index.row(),2)).toString());
-                   ui->lineEdit_ADRESSE_2->setText(ui->tableView->model()->data(ui->tableView->model()->index(index.row(),3)).toString());
-                   ui->lineEdit_MARCHANDISE_2->setText(ui->tableView->model()->data(ui->tableView->model()->index(index.row(),4)).toString());
+                   ui->id_label->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),0)).toString());
+                   ui->lineEdit_NOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),1)).toString());
+                   ui->lineEdit_PRENOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),2)).toString());
+                   ui->lineEdit_EMAIL2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),3)).toString());
+                   ui->lineEdit_CIN2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),5)).toString());
+                   ui->lineEdit_TELEPHONE_2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),4)).toString());
+                   ui->dateEdit_2->setDate(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),6)).toDate());
 
 }
 
 void gestion_candidats::on_Supprimer_clicked()
-{/*
-    int cin=ui->lineEdit_CIN_2->text().toInt();
-    bool test=f.supprimer(cin);
+{
+    int id=ui->id_label->text().toInt();
+    bool test=candidat.remove(id);
     if(test)
         {
-            ui->tableView->setModel(f.afficher());
+            ui->tableView_candidats->setModel(candidat.readAll());
             QMessageBox::information(nullptr,QObject::tr("Not OK"),
                                      QObject::tr("Suppression effectuée\n"
                                                  "Click Cancel to exit."),QMessageBox::Cancel);
@@ -87,91 +114,110 @@ void gestion_candidats::on_Supprimer_clicked()
             QMessageBox::critical(nullptr,QObject::tr("Not OK"),
                                      QObject::tr("Suppression non effectué\n"
                                                  "Click Cancel to exit."),QMessageBox::Cancel);
-      ui->lineEdit_CIN_2->clear();
-      ui->lineEdit_NOM_2->clear();
-      ui->lineEdit_PRENOM_2->clear();
-      ui->lineEdit_ADRESSE_2->clear();
-      ui->lineEdit_MARCHANDISE_2->clear();
-*/
-}
+      ui->lineEdit_CIN2->clear();
+      ui->lineEdit_NOM2->clear();
+      ui->lineEdit_PRENOM2->clear();
+      ui->lineEdit_EMAIL2->clear();
+      ui->lineEdit_TELEPHONE_2->clear();
+      ui->dateEdit_2->clear();
 
+
+}
 
 void gestion_candidats::on_Modifier_clicked()
 {
-   /* int cin=ui->lineEdit_cin_2->text().toInt();
-   QString NOMF=ui->lineEdit_NOM_2->text();
-   QString PRENOMF=ui->lineEdit_PRENOM_2->text();
-   QString CLASSE=ui->lineEdit_ADRESSE_2->text();
-   QString ID=ui->lineEdit_MARCHANDISE_2->text();
-   fournisseur f( cin,  NOMF, PRENOMF, CLASSE, ID );
-   bool test=f.modifier(cin,  NOMF, PRENOMF, CLASSE, ID );
-   if(test)
-                   {
-                       ui->tableView->setModel(f.afficher());
-                       QMessageBox::information(nullptr, QObject::tr("modifier un etudiant"),
-                                         QObject::tr("fournisseur  modifié.\n"
-                                                     "Click Cancel to exit."), QMessageBox::Cancel);
-                    }
+    int id = ui->id_label->text().toInt();
+    QString cin = ui->lineEdit_CIN2->text();
+    QString nom = ui->lineEdit_NOM2->text();
+    QString prenom = ui->lineEdit_PRENOM2->text();
+    QString email = ui->lineEdit_EMAIL2->text();
+    QString telephone = ui->lineEdit_TELEPHONE_2->text();
+    QDate datenaissance = ui->dateEdit_2->date();  // Make sure to correctly get the date from QDateEdit
 
-                         else
-                             QMessageBox::critical(nullptr, QObject::tr("Modifier etudiant"),
-                                         QObject::tr("Erreur !.\n"
-                                                     "Click Cancel to exit."), QMessageBox::Cancel);
-   ui->lineEdit_cin_2->clear();
-    ui->lineEdit_NOM_2->clear();
-  ui->lineEdit_PRENOM_2->clear();
-  ui->lineEdit_ADRESSE_2->clear();
-  ui->lineEdit_MARCHANDISE_2->clear();
-*/
+    candidat.setNom(nom);
+    candidat.setPrenom(prenom);
+    candidat.setEmail(email);
+    candidat.setCIN(cin);
+    candidat.setDateNaissance(datenaissance);
+    candidat.setTelephone(telephone);
 
+    bool test = candidat.update(id);
+
+    if (test) {
+        ui->tableView_candidats->setModel(candidat.readAll());  // Refresh table
+        QMessageBox::information(nullptr, QObject::tr("modifier un candidat"),
+                                 QObject::tr("candidat modifié.\nClick Cancel to exit."),
+                                 QMessageBox::Cancel);
+    } else {
+        QMessageBox::critical(nullptr, QObject::tr("Modifier candidat"),
+                              QObject::tr("Erreur !.\nClick Cancel to exit."),
+                              QMessageBox::Cancel);
+    }
+
+    // Clear the fields after modification
+    ui->lineEdit_CIN2->clear();
+    ui->lineEdit_NOM2->clear();
+    ui->lineEdit_PRENOM2->clear();
+    ui->lineEdit_EMAIL2->clear();
+    ui->lineEdit_TELEPHONE_2->clear();
+    ui->dateEdit_2->setDate(QDate::currentDate()); // Set default date after clearing
 }
 
-void gestion_candidats::on_Gestion_Fournisseur_tabBarClicked(int index)
+
+void gestion_candidats::on_Gestion_CANDIDAT_tabBarClicked(int index)
 {
-    /*
-    index=1;
-    ui->tableView->setModel(f.afficher());
-*/
+    index = 1;
+
+    // Check if the database connection is open
+    if (!QSqlDatabase::database().isOpen()) {
+        qDebug() << "Database is not open!";
+        return;
+    }
+
+    // Bind the data model to the table view
+    ui->tableView_candidats->setModel(candidat.readAll());
 }
+
+
 
 void gestion_candidats::on_recherche_clicked()
 {
-    /*
+
     QString rech=ui->lineEdit_rech->text();
 
-             ui->tableView->setModel(f.rechercherM(rech));
+             ui->tableView_candidats->setModel(candidat.rechercher(rech));
              ui->lineEdit_rech->clear();
-*/
+
 
 }
 
-void gestion_candidats::on_triC_clicked()
+void gestion_candidats::on_tri_date_clicked()
 {
-    /*
-    fournisseur f;
-    ui->tableView->setModel(f.triC());
-    */
+
+    Candidat candidat;
+    ui->tableView_candidats->setModel(candidat.triDate());
 }
 
-void gestion_candidats::on_pushButton_triN_clicked()
+void gestion_candidats::on_pushButton_tri_id_clicked()
 {
-    /*fournisseur f;
-    ui->tableView->setModel(f.triN());*/
+
+    Candidat candidat;
+    ui->tableView_candidats->setModel(candidat.triID());
 }
 
-void gestion_candidats::on_pushButton_triA_clicked()
-{/*
+void gestion_candidats::on_pushButton_tri_nom_clicked()
+{
 
-    fournisseur f;
-    ui->tableView->setModel(f.triA());*/
+    Candidat candidat;
+    ui->tableView_candidats->setModel(candidat.triNom());
 }
 
 void gestion_candidats::on_inprimer_clicked()
-{/* QString strStream;
+{ QString strStream;
     QTextStream out(&strStream);
 
-    const int rowCount = ui->tableView->model()->rowCount();
-    const int columnCount = ui->tableView->model()->columnCount();
+    const int rowCount = ui->tableView_candidats->model()->rowCount();
+    const int columnCount = ui->tableView_candidats->model()->columnCount();
     QString TT = QDateTime::currentDateTime().toString();
     out <<"<html>\n"
           "<head>\n"
@@ -179,23 +225,23 @@ void gestion_candidats::on_inprimer_clicked()
         << "<title>ERP - COMmANDE LIST<title>\n "
         << "</head>\n"
         "<body bgcolor=#ffffff link=#5000A0>\n"
-        "<h1 style=\"text-align: center;\"><strong> ******LISTE DES  licence commerciale ******"+TT+" </strong></h1>"
+        "<h1 style=\"text-align: center;\"><strong> ******LISTE DES CANDIDATS******"+TT+" </strong></h1>"
            +"<img src=C://Users//WALID//OneDrive//Bureau//logo//logo />"
         "<table style=\"text-align: center; font-size: 20px;\" border=1>\n "
           "</br> </br>";
     // headers
     out << "<thead><tr bgcolor=#d6e5ff>";
     for (int column = 0; column < columnCount; column++)
-        if (!ui->tableView->isColumnHidden(column))
-            out << QString("<th>%1</th>").arg(ui->tableView->model()->headerData(column, Qt::Horizontal).toString());
+        if (!ui->tableView_candidats->isColumnHidden(column))
+            out << QString("<th>%1</th>").arg(ui->tableView_candidats->model()->headerData(column, Qt::Horizontal).toString());
     out << "</tr></thead>\n";
 
     // data table
     for (int row = 0; row < rowCount; row++) {
         out << "<tr>";
         for (int column = 0; column < columnCount; column++) {
-            if (!ui->tableView->isColumnHidden(column)) {
-                QString data =ui->tableView->model()->data(ui->tableView->model()->index(row, column)).toString().simplified();
+            if (!ui->tableView_candidats->isColumnHidden(column)) {
+                QString data =ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(row, column)).toString().simplified();
                 out << QString("<td bkcolor=0>%1</td>").arg((!data.isEmpty()) ? data : QString("&nbsp;"));
             }
         }
@@ -215,22 +261,22 @@ void gestion_candidats::on_inprimer_clicked()
         document->print(&printer);
     }
 
-    delete document;*/
+    delete document;
 }
 
 void gestion_candidats::on_statistique_clicked()
-{/*
+{
     QSqlQueryModel * model= new QSqlQueryModel();
-                                model->setQuery("select * from FOURNISSEUR where PRIX_UNITAIRE < 400 ");
+                                model->setQuery("SELECT * FROM Candidat WHERE datenaissance BETWEEN TO_DATE('1995-01-01', 'YYYY-MM-DD') AND TO_DATE('2000-12-31', 'YYYY-MM-DD')");
                                 float nbr1=model->rowCount();
-                                model->setQuery("select * from FOURNISSEUR where PRIX_UNITAIRE  between 400 and 700 ");
+                                model->setQuery("select * from Candidat WHERE datenaissance > TO_DATE('2000-12-31', 'YYYY-MM-DD')");
                                 float nbr2=model->rowCount();
-                                model->setQuery("select * from FOURNISSEUR where PRIX_UNITAIRE >700 ");
+                                model->setQuery("select * from Candidat where datenaissance < TO_DATE('1995-01-01', 'YYYY-MM-DD')");
                                 float nbr3=model->rowCount();
                                 float total=nbr1+nbr2+nbr3;
-                                QString a=QString(" PRIX_UNITAIRE< 400"+  QString::number((nbr1*100)/total,'f',2)+"%" );
-                                QString b=QString(" PRIX_UNITAIRE between 400 and 700"+  QString::number((nbr2*100)/total,'f',2)+"%" );
-                                QString c=QString(" PRIX_UNITAIRE >700"+ QString::number((nbr3*100)/total,'f',2)+"%" );
+                                QString a=QString(" Candidats entre 24-29 ans"+  QString::number((nbr1*100)/total,'f',2)+"%" );
+                                QString b=QString(" Candidats moins que 24 ans"+  QString::number((nbr2*100)/total,'f',2)+"%" );
+                                QString c=QString(" Candidats plus que 29 ans"+ QString::number((nbr3*100)/total,'f',2)+"%" );
                                 QPieSeries *series = new QPieSeries();
                                 series->append(a,nbr1);
                                 series->append(b,nbr2);
@@ -263,11 +309,38 @@ void gestion_candidats::on_statistique_clicked()
                                 QChartView *chartView = new QChartView(chart);
                                 chartView->setRenderHint(QPainter::Antialiasing);
                                 chartView->resize(1000,500);
-                                chartView->show();*/
+                                chartView->show();
 }
 
 void gestion_candidats::on_pushButton_clicked()
 {
-        //gestionTeacherDialog->show();
+    //gestionTeacherDialog->show();
 }
+
+void gestion_candidats::start_camera()
+{
+    M_Camera->start();
+}
+
+void gestion_candidats::stop_camera()
+{
+    M_Camera->stop();
+}
+
+
+void gestion_candidats::on_btn_start_camera_clicked()
+{
+    start_camera();
+}
+
+void gestion_candidats::on_btn_stop_camera_clicked()
+{
+    stop_camera();
+
+}
+
+void gestion_candidats::on_sendEmailButton_clicked() {}
+
+
+void gestion_candidats::sendConfirmationEmail(const QString &email) {}
 
