@@ -15,11 +15,14 @@ public:
     OffreEmploi(QString titre, QString description, QString entreprise, QDate dateExpiration, QString lieu);
     OffreEmploi();
 
-
     bool create(); // Create a new OffreEmploi
     QSqlQueryModel* readAll(); // Read all OffreEmplois
     bool update(int id); // Update OffreEmploi by ID
     bool remove(int id); // Delete OffreEmplois by ID
+    QSqlQueryModel* rechercher(QString NOM);
+    QSqlQueryModel* triNom();
+    QSqlQueryModel* triEntreprise();
+    QSqlQueryModel* triDate();
 
     // Getters and setters
     int getId() const;
@@ -39,6 +42,7 @@ public:
 
     QString getLieu() const;
     void setLieu(const QString &lieu);
+
 
 private:
     int id;

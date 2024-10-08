@@ -19,7 +19,7 @@
      <x>10</x>
      <y>110</y>
      <width>931</width>
-     <height>501</height>
+     <height>531</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -29,14 +29,14 @@
     <enum>QFrame::Sunken</enum>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="page">
     <widget class="QTabWidget" name="tabwidget">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>10</y>
+       <x>30</x>
+       <y>0</y>
        <width>901</width>
        <height>481</height>
       </rect>
@@ -45,7 +45,7 @@
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Consulter&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="Ajout">
       <attribute name="title">
@@ -552,34 +552,505 @@
     </widget>
    </widget>
    <widget class="QWidget" name="page_2">
-    <widget class="QFrame" name="frame">
+    <widget class="QTabWidget" name="tabwidget_2">
      <property name="geometry">
       <rect>
-       <x>149</x>
-       <y>119</y>
-       <width>411</width>
-       <height>261</height>
+       <x>0</x>
+       <y>0</y>
+       <width>931</width>
+       <height>521</height>
       </rect>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Consulter&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+     <property name="currentIndex">
+      <number>1</number>
      </property>
-    </widget>
-    <widget class="QToolButton" name="toolButton">
-     <property name="geometry">
-      <rect>
-       <x>610</x>
-       <y>190</y>
-       <width>211</width>
-       <height>101</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>choose</string>
-     </property>
+     <widget class="QWidget" name="Ajout_2">
+      <property name="font">
+       <font>
+        <italic>false</italic>
+       </font>
+      </property>
+      <attribute name="title">
+       <string>Ajouter</string>
+      </attribute>
+      <widget class="QLabel" name="label_14">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>60</y>
+         <width>69</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>TITRE</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_15">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>350</y>
+         <width>111</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>DESCRIPTION</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_16">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>120</y>
+         <width>111</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>ENTREPRISE</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_17">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>170</y>
+         <width>71</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>LIEU</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_18">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>240</y>
+         <width>151</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>DATE EXPIRATION</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_TITRE">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>50</y>
+         <width>261</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="Ajouter_2">
+       <property name="geometry">
+        <rect>
+         <x>320</x>
+         <y>420</y>
+         <width>201</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Ajouter Offre d'emploi</string>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_DESCRIPTION">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>280</y>
+         <width>261</width>
+         <height>91</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_ENTREPRISE">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>110</y>
+         <width>261</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QDateEdit" name="dateEdit_EXPIRATION">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>230</y>
+         <width>261</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="maximumDateTime">
+        <datetime>
+         <hour>23</hour>
+         <minute>59</minute>
+         <second>59</second>
+         <year>2024</year>
+         <month>10</month>
+         <day>9</day>
+        </datetime>
+       </property>
+       <property name="minimumDate">
+        <date>
+         <year>1980</year>
+         <month>9</month>
+         <day>14</day>
+        </date>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>170</y>
+         <width>261</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="Consulter_2">
+      <attribute name="title">
+       <string>Consulter</string>
+      </attribute>
+      <widget class="QTableView" name="tableView_offres">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>441</width>
+         <height>271</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_modifier_candidat_2">
+       <property name="geometry">
+        <rect>
+         <x>670</x>
+         <y>290</y>
+         <width>112</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Modifier</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_supprimer_candidat_2">
+       <property name="geometry">
+        <rect>
+         <x>800</x>
+         <y>290</y>
+         <width>112</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Supprimer</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_tri_titre">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>300</y>
+         <width>112</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TRI par TITRE</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_tri_date_expiration">
+       <property name="geometry">
+        <rect>
+         <x>290</x>
+         <y>300</y>
+         <width>171</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TRI par Date EXPIRATION</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_tri_entreprise">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>300</y>
+         <width>161</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TRI par NOM ENTREPRISE</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_recherche_offre">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>430</y>
+         <width>171</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Recherche par Nom</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_rech_offre">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>430</y>
+         <width>181</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_imprimer_candidat_2">
+       <property name="geometry">
+        <rect>
+         <x>800</x>
+         <y>450</y>
+         <width>112</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Imprimer</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_statistique_candidat_2">
+       <property name="geometry">
+        <rect>
+         <x>680</x>
+         <y>450</y>
+         <width>111</width>
+         <height>34</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>stat</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_20">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>50</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TITRE</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_21">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>100</y>
+         <width>91</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>DESCIPTION</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_22">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>150</y>
+         <width>91</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>ENTREPRISE</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_23">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>200</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>LIEU</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_24">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>240</y>
+         <width>111</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>DATE EXPIRATION</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_26">
+       <property name="geometry">
+        <rect>
+         <x>470</x>
+         <y>20</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>ID  :</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="id_label_2">
+       <property name="geometry">
+        <rect>
+         <x>600</x>
+         <y>20</y>
+         <width>191</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>idOffre</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_DESCRIPTION_2">
+       <property name="geometry">
+        <rect>
+         <x>590</x>
+         <y>90</y>
+         <width>191</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_2">
+       <property name="geometry">
+        <rect>
+         <x>590</x>
+         <y>190</y>
+         <width>191</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_ENTREPRISE_2">
+       <property name="geometry">
+        <rect>
+         <x>590</x>
+         <y>140</y>
+         <width>191</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QDateEdit" name="dateEdit_EXPIRATION_2">
+       <property name="geometry">
+        <rect>
+         <x>590</x>
+         <y>230</y>
+         <width>211</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="maximumDateTime">
+        <datetime>
+         <hour>23</hour>
+         <minute>59</minute>
+         <second>59</second>
+         <year>2024</year>
+         <month>10</month>
+         <day>9</day>
+        </datetime>
+       </property>
+       <property name="minimumDate">
+        <date>
+         <year>1980</year>
+         <month>9</month>
+         <day>14</day>
+        </date>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_TITRE_2">
+       <property name="geometry">
+        <rect>
+         <x>592</x>
+         <y>44</y>
+         <width>191</width>
+         <height>31</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -591,6 +1062,15 @@
      <width>241</width>
      <height>28</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <italic>true</italic>
+     <underline>false</underline>
+     <strikeout>false</strikeout>
+     <stylestrategy>PreferDefault</stylestrategy>
+    </font>
    </property>
    <property name="text">
     <string>Gestion Candidats</string>
@@ -604,6 +1084,12 @@
      <width>241</width>
      <height>28</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <italic>true</italic>
+    </font>
    </property>
    <property name="text">
     <string>Gestion Offre d'emploi</string>

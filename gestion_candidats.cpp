@@ -1,5 +1,6 @@
 #include "gestion_candidats.h"
 #include "ui_gestion_candidats.h"
+#include "offreEmploi.h"
 #include "candidat.h"
 #include<QString>
 #include<QMessageBox>
@@ -23,19 +24,25 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
 {
     ui->setupUi(this);
         ui->tableView_candidats->setModel((candidat.readAll()));
+        ui->tableView_offres->setModel((offreEmploi.readAll()));
         // Connect the button signal to the slot
         connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
+        connect(ui->tableView_offres, &QTableView::activated, this, &gestion_candidats::on_tableView_offres_activated);
         connect(ui->btn_modifier_candidat, SIGNAL(clicked()), this, SLOT(on_Modifier_clicked()));
         connect(ui->btn_supprimer_candidat, SIGNAL(clicked()), this, SLOT(on_Supprimer_clicked()));
+        connect(ui->btn_supprimer_candidat_2, SIGNAL(clicked()), this, SLOT(on_Supprimer_offre_clicked()));
+        connect(ui->btn_modifier_candidat_2, SIGNAL(clicked()), this, SLOT(on_Modifier_offre_clicked()));
         connect(ui->btn_recherche, SIGNAL(clicked()), this, SLOT(on_recherche_clicked()));
         connect(ui->btn_tri_nom, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_nom_clicked()));
         connect(ui->btn_tri_id, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_id_clicked()));
         connect(ui->btn_tri_date, SIGNAL(clicked()), this, SLOT(on_tri_date_clicked()));
         connect(ui->btn_imprimer_candidat,SIGNAL(clicked()),this,SLOT(on_inprimer_clicked()));
+        connect(ui->btn_imprimer_candidat_2,SIGNAL(clicked()),this,SLOT(on_imprimer_offre()));
         connect(ui->btn_statistique_candidat,SIGNAL(clicked()),this,SLOT(on_statistique_clicked()));
         connect(ui->btn_start_camera,SIGNAL(clicked()),this,SLOT(on_btn_start_camera_clicked()));
         connect(ui->btn_stop_camera,SIGNAL(clicked()),this,SLOT(on_btn_stop_camera_clicked()));
         connect(ui->Ajouter,SIGNAL(clicked()),this,SLOT(on_sendEmailButton_clicked()));
+        connect(ui->Ajouter_2,SIGNAL(clicked()),this,SLOT(on_Ajouter_OffreEmploi_clicked()));
         connect(ui->btn_gestion_candidats, &QPushButton::clicked, this, [=]() {
             ui->stackedWidget->setCurrentIndex(0);  // Example: switch to the second page (index 1)
         });
@@ -43,7 +50,27 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
             ui->stackedWidget->setCurrentIndex(1);  // Example: switch to the second page (index 1)
         });
 
+        connect(ui->btn_recherche_offre, SIGNAL(clicked()), this, SLOT(on_recherche_offre_clicked()));
+        connect(ui->btn_tri_titre, SIGNAL(clicked()), this, SLOT(on_tri_titre_clicked()));
+        connect(ui->btn_tri_date_expiration, SIGNAL(clicked()), this, SLOT(on_tri_dateexpiration_clicked()));
+        connect(ui->btn_tri_entreprise, SIGNAL(clicked()), this, SLOT(on_tri_Entreprise_clicked()));
+        connect(ui->btn_statistique_candidat_2,SIGNAL(clicked()),this,SLOT(on_statistique_offre_clicked()));
 
+
+
+
+
+
+           gouvernorates << "Ariana" << "Béja" << "Ben Arous" << "Bizerte"
+                         << "Gabès" << "Gafsa" << "Jendouba" << "Kairouan"
+                         << "Kasserine" << "Kebili" << "La Manouba" << "Le Kef"
+                         << "Mahdia" << "Manouba" << "Medenine" << "Monastir"
+                         << "Nabeul" << "Sfax" << "Sidi Bouzid" << "Siliana"
+                         << "Souk Ahras" << "Tataouine" << "Tozeur" << "Tunis";
+
+           // Populate the QComboBox with the governorates
+           ui->comboBox->addItems(gouvernorates); // Replace comboBox_LIEU with your QComboBox object name
+           ui->comboBox_2->addItems(gouvernorates);
 
         for(const QCameraInfo &infor : QCameraInfo::availableCameras())
         {
@@ -290,7 +317,7 @@ void gestion_candidats::on_inprimer_clicked()
         << "<title>ERP - COMmANDE LIST<title>\n "
         << "</head>\n"
         "<body bgcolor=#ffffff link=#5000A0>\n"
-        "<h1 style=\"text-align: center;\"><strong> ******LISTE DES CANDIDATS******"+TT+" </strong></h1>"
+        "<h1 style=\"text-align: center;\"><strong> ******LISTE DES CANDIDATS******\n"+TT+" </strong></h1>"
            +"<img src=C://Users//WALID//OneDrive//Bureau//logo//logo />"
         "<table style=\"text-align: center; font-size: 20px;\" border=1>\n "
           "</br> </br>";
@@ -432,4 +459,287 @@ void gestion_candidats::on_sendEmailButton_clicked() {}
 
 
 void gestion_candidats::sendConfirmationEmail(const QString &email) {}
+
+
+
+void gestion_candidats::on_Ajouter_OffreEmploi_clicked()
+{
+    QString titre = ui->lineEdit_TITRE->text();
+    QString description = ui->lineEdit_DESCRIPTION->text();
+    QString entreprise = ui->lineEdit_ENTREPRISE->text();
+    QString lieu = ui->comboBox->currentText();
+    QDate dateExpiration = ui->dateEdit_EXPIRATION->date();
+
+    // Initialize an empty string for error messages
+    QString errorMsg = "";
+
+
+    // Create the Candidat if all validations pass
+    OffreEmploi offreEmploi(titre, description, entreprise, dateExpiration, lieu);
+    bool test = offreEmploi.create();
+    if (test) {
+        ui->tableView_offres->setModel(offreEmploi.readAll());
+        QMessageBox::information(nullptr, QObject::tr("OK"),
+                                 QObject::tr("Ajout effectué\n"
+                                             "Click Cancel to exit."), QMessageBox::Cancel);
+    } else {
+        QMessageBox::critical(nullptr, QObject::tr("Not OK"),
+                              QObject::tr("Ajout non effectué\n"
+                                          "Click Cancel to exit."), QMessageBox::Cancel);
+    }
+
+    // Clear the form fields
+    ui->lineEdit_TITRE->clear();
+    ui->lineEdit_DESCRIPTION->clear();
+    ui->lineEdit_ENTREPRISE->clear();
+    ui->comboBox->setCurrentIndex(0);
+    ui->dateEdit_EXPIRATION->clear();
+}
+
+
+
+void gestion_candidats::on_tableView_offres_activated(const QModelIndex &index)
+{
+                   ui->id_label_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),0)).toString());
+                   ui->lineEdit_TITRE_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),1)).toString());
+                   ui->lineEdit_DESCRIPTION_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),2)).toString());
+                   ui->lineEdit_ENTREPRISE_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),3)).toString());
+                   ui->comboBox_2->setCurrentText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),5)).toString());
+                   ui->dateEdit_EXPIRATION_2->setDate(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),4)).toDate());
+
+}
+
+
+
+void gestion_candidats::on_Gestion_Offres_tabBarClicked(int index)
+{
+    if (index == 1) {  // Only load if it's the job offers tab
+            if (!QSqlDatabase::database().isOpen()) {
+                qDebug() << "Database is not open!";
+                return;
+            }
+
+            ui->tableView_offres->setModel(offreEmploi.readAll());
+    }
+}
+
+
+void gestion_candidats::on_Supprimer_offre_clicked()
+{
+    int id=ui->id_label_2->text().toInt();
+    bool test=offreEmploi.remove(id);
+    if(test)
+        {
+            ui->tableView_offres->setModel(offreEmploi.readAll());
+            QMessageBox::information(nullptr,QObject::tr("Not OK"),
+                                     QObject::tr("Suppression effectuée\n"
+                                                 "Click Cancel to exit."),QMessageBox::Cancel);
+        }
+        else
+            QMessageBox::critical(nullptr,QObject::tr("Not OK"),
+                                     QObject::tr("Suppression non effectué\n"
+                                                 "Click Cancel to exit."),QMessageBox::Cancel);
+      ui->lineEdit_TITRE_2->clear();
+      ui->lineEdit_DESCRIPTION_2->clear();
+      ui->lineEdit_ENTREPRISE_2->clear();
+      ui->comboBox_2->setCurrentIndex(0);
+      ui->dateEdit_EXPIRATION_2->clear();
+
+
+}
+
+void gestion_candidats::on_Modifier_offre_clicked()
+{
+    int id = ui->id_label_2->text().toInt();
+    QString titre = ui->lineEdit_TITRE_2->text();
+    QString description = ui->lineEdit_DESCRIPTION_2->text();
+    QString entreprise = ui->lineEdit_ENTREPRISE_2->text();
+    QString lieu = ui->comboBox_2->currentText();
+    QDate dateExpiration = ui->dateEdit_EXPIRATION_2->date();  // Make sure to correctly get the date from QDateEdit
+
+    offreEmploi.setTitre(titre);
+    offreEmploi.setDescription(description);
+    offreEmploi.setEntreprise(entreprise);
+    offreEmploi.setLieu(lieu);
+    offreEmploi.setDateExpiration(dateExpiration);
+
+
+
+
+    bool test = offreEmploi.update(id);
+
+    if (test) {
+        ui->tableView_offres->setModel(offreEmploi.readAll());  // Refresh table
+        QMessageBox::information(nullptr, QObject::tr("modifier un offreEmploi"),
+                                 QObject::tr("offreEmploi modifié.\nClick Cancel to exit."),
+                                 QMessageBox::Cancel);
+    } else {
+        QMessageBox::critical(nullptr, QObject::tr("Modifier offreEmploi"),
+                              QObject::tr("Erreur !.\nClick Cancel to exit."),
+                              QMessageBox::Cancel);
+    }
+
+    // Clear the fields after modification
+    ui->lineEdit_TITRE_2->clear();
+    ui->lineEdit_DESCRIPTION_2->clear();
+    ui->lineEdit_ENTREPRISE_2->clear();
+    ui->comboBox_2->setCurrentText(lieu);
+    ui->dateEdit_EXPIRATION_2->clear();
+}
+
+void gestion_candidats::showEvent(QShowEvent *event) {
+    // Ensure the base class showEvent is called
+    QWidget::showEvent(event);
+
+    // Load the job offers into the tableView_offres
+    if (!QSqlDatabase::database().isOpen()) {
+        qDebug() << "Database is not open!";
+        return;
+    }
+
+    ui->tableView_offres->setModel(offreEmploi.readAll());
+}
+
+
+
+void gestion_candidats::on_recherche_offre_clicked()
+{
+    QString rech=ui->lineEdit_rech_offre->text();
+
+             ui->tableView_offres->setModel(offreEmploi.rechercher(rech));
+             ui->lineEdit_rech_offre->clear();
+}
+
+void gestion_candidats::on_tri_dateexpiration_clicked()
+{
+
+    OffreEmploi offreEmploi;
+    ui->tableView_offres->setModel(offreEmploi.triDate());
+}
+
+void gestion_candidats::on_tri_titre_clicked()
+{
+
+    OffreEmploi offreEmploi;
+    ui->tableView_offres->setModel(offreEmploi.triNom());
+}
+
+void gestion_candidats::on_tri_Entreprise_clicked()
+{
+
+    OffreEmploi offreEmploi;
+    ui->tableView_offres->setModel(offreEmploi.triEntreprise());
+}
+
+void gestion_candidats::on_statistique_offre_clicked()
+{
+    // List of governorates (assuming this is already available in the class)
+    QStringList gouvernorates;
+    gouvernorates << "Ariana" << "Béja" << "Ben Arous" << "Bizerte"
+                  << "Gabès" << "Gafsa" << "Jendouba" << "Kairouan"
+                  << "Kasserine" << "Kebili" << "La Manouba" << "Le Kef"
+                  << "Mahdia" << "Manouba" << "Medenine" << "Monastir"
+                  << "Nabeul" << "Sfax" << "Sidi Bouzid" << "Siliana"
+                  << "Souk Ahras" << "Tataouine" << "Tozeur" << "Tunis";
+
+    QSqlQueryModel *model = new QSqlQueryModel();
+
+    // Step 1: Calculate the total number of offers across all governorates
+    float total = 0;
+    for (const QString &governorate : gouvernorates) {
+        QString query = QString("SELECT * FROM OffreEmploi WHERE lieu = '%1'").arg(governorate);
+        model->setQuery(query);
+        total += model->rowCount();
+    }
+
+    // Prepare a pie chart series to hold the data
+    QPieSeries *series = new QPieSeries();
+
+    // Step 2: Add each governorate's data to the chart and calculate its percentage based on the total
+    for (const QString &governorate : gouvernorates) {
+        QString query = QString("SELECT * FROM OffreEmploi WHERE lieu = '%1'").arg(governorate);
+        model->setQuery(query);
+        float count = model->rowCount();
+
+        // Only add non-zero results to the chart
+        if (count > 0 && total > 0) {
+            // Calculate percentage based on the total number of offers
+            float percentage = (count * 100) / total;
+            QString label = QString("%1: %2%").arg(governorate).arg(QString::number(percentage, 'f', 2));
+            series->append(label, count);
+        }
+    }
+
+    // Show labels for non-zero slices
+    for (int i = 0; i < series->slices().size(); ++i) {
+        QPieSlice *slice = series->slices().at(i);
+        slice->setLabelVisible();
+    }
+
+    // Create the chart
+    QChart *chart = new QChart();
+    chart->addSeries(series);
+    chart->setTitle("Statistiques des offres d'emploi par gouvernorat");
+    chart->legend()->hide();
+
+    // Display the chart
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->resize(1000, 500);
+    chartView->show();
+}
+
+
+
+void gestion_candidats::on_imprimer_offre()
+{ QString strStream;
+    QTextStream out(&strStream);
+
+    const int rowCount = ui->tableView_offres->model()->rowCount();
+    const int columnCount = ui->tableView_offres->model()->columnCount();
+    QString TT = QDateTime::currentDateTime().toString();
+    out <<"<html>\n"
+          "<head>\n"
+           "<meta Content=\"Text/html; charset=Windows-1251\">\n"
+        << "<title>ERP - Liste des Offres d'emploi<title>\n "
+        << "</head>\n"
+        "<body bgcolor=#ffffff link=#5000A0>\n"
+        "<h1 style=\"text-align: center;\"><strong> ******Liste des Offres d'emploi******\n"+TT+" </strong></h1>"
+           +"<img src=C://Users//WALID//OneDrive//Bureau//logo//logo />"
+        "<table style=\"text-align: center; font-size: 20px;\" border=1>\n "
+          "</br> </br>";
+    // headers
+    out << "<thead><tr bgcolor=#d6e5ff>";
+    for (int column = 0; column < columnCount; column++)
+        if (!ui->tableView_offres->isColumnHidden(column))
+            out << QString("<th>%1</th>").arg(ui->tableView_offres->model()->headerData(column, Qt::Horizontal).toString());
+    out << "</tr></thead>\n";
+
+    // data table
+    for (int row = 0; row < rowCount; row++) {
+        out << "<tr>";
+        for (int column = 0; column < columnCount; column++) {
+            if (!ui->tableView_offres->isColumnHidden(column)) {
+                QString data =ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(row, column)).toString().simplified();
+                out << QString("<td bkcolor=0>%1</td>").arg((!data.isEmpty()) ? data : QString("&nbsp;"));
+            }
+        }
+        out << "</tr>\n";
+    }
+    out <<  "</table>\n"
+        "</body>\n"
+        "</html>\n";
+
+    QTextDocument *document = new QTextDocument();
+    document->setHtml(strStream);
+
+    QPrinter printer;
+
+    QPrintDialog *dialog = new QPrintDialog(&printer, nullptr);
+    if (dialog->exec() == QDialog::Accepted) {
+        document->print(&printer);
+    }
+
+    delete document;
+}
 

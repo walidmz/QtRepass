@@ -7,6 +7,7 @@
 #include <QtWidgets>
 #include <QMultimedia>
 #include <QtMultimediaWidgets>
+#include "offreEmploi.h"
 
 
 
@@ -59,11 +60,26 @@ private slots:
     void on_btn_start_camera_clicked();
 
     void on_btn_stop_camera_clicked();
+    void on_Ajouter_OffreEmploi_clicked();
+    void on_tableView_offres_activated(const QModelIndex &index);
+    void on_Gestion_Offres_tabBarClicked(int index);
+    void on_Supprimer_offre_clicked();
+    void on_Modifier_offre_clicked();
+    void showEvent(QShowEvent *event);
+    void on_recherche_offre_clicked();
+    void on_statistique_offre_clicked();
+    void on_tri_dateexpiration_clicked();
 
+    void on_tri_titre_clicked();
+    void on_imprimer_offre();
+    void on_tri_Entreprise_clicked();
 private:
     Ui::gestion_candidats *ui;
     Candidat candidat;
+    OffreEmploi offreEmploi;
     QScopedPointer<QCamera> M_Camera;
+    QStringList gouvernorates;
+
 
 };
 
