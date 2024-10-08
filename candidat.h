@@ -12,8 +12,8 @@ class Candidat
 {
 public:
     // Constructor
-    Candidat(int id, QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, QString telephone);
-    Candidat( QString nom,  QString prenom,  QString email,  QString cin,  QDate dateNaissance,  QString telephone);
+    Candidat(int id, QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, int telephone);
+    Candidat( QString nom,  QString prenom,  QString email,  QString cin,  QDate dateNaissance,  int telephone);
     Candidat();
         bool create(); // Create a new Candidat
         QSqlQueryModel* readAll(); // Read all Candidats
@@ -43,8 +43,8 @@ public:
     QDate getDateNaissance() const;
     void setDateNaissance(const QDate &date);
 
-    QString getTelephone() const;
-    void setTelephone(const QString &telephone);
+    int getTelephone() const;
+    void setTelephone(const int &telephone);
 
     QString getCIN() const;
     void setCIN(const QString &cin);
@@ -55,7 +55,7 @@ private:
     QString prenom;
     QString email;
     QDate dateNaissance;
-    QString telephone;
+    int telephone;
     QString cin;
 
 };

@@ -8,7 +8,7 @@
 
 
 Candidat::Candidat() : id(0) {}
-Candidat::Candidat(QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, QString telephone ):
+Candidat::Candidat(QString nom, QString prenom, QString email, QString cin, QDate dateNaissance, int telephone ):
     nom(nom), prenom(prenom), email(email), cin(cin), dateNaissance(dateNaissance), telephone(telephone) {}
 // Setter for 'nom'
 void Candidat::setNom(const QString &nom) {
@@ -31,7 +31,7 @@ void Candidat::setDateNaissance(const QDate &date) {
 }
 
 // Setter for 'telephone'
-void Candidat::setTelephone(const QString &telephone) {
+void Candidat::setTelephone(const int &telephone) {
     this->telephone = telephone;
 }
 

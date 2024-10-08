@@ -24,7 +24,6 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
     ui->setupUi(this);
         ui->tableView_candidats->setModel((candidat.readAll()));
         // Connect the button signal to the slot
-        connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(on_pushButton_clicked()));
         connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
         connect(ui->btn_modifier_candidat, SIGNAL(clicked()), this, SLOT(on_Modifier_clicked()));
         connect(ui->btn_supprimer_candidat, SIGNAL(clicked()), this, SLOT(on_Supprimer_clicked()));
@@ -37,6 +36,13 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         connect(ui->btn_start_camera,SIGNAL(clicked()),this,SLOT(on_btn_start_camera_clicked()));
         connect(ui->btn_stop_camera,SIGNAL(clicked()),this,SLOT(on_btn_stop_camera_clicked()));
         connect(ui->Ajouter,SIGNAL(clicked()),this,SLOT(on_sendEmailButton_clicked()));
+        connect(ui->btn_gestion_candidats, &QPushButton::clicked, this, [=]() {
+            ui->stackedWidget->setCurrentIndex(0);  // Example: switch to the second page (index 1)
+        });
+        connect(ui->btn_gestion_offreEmploi, &QPushButton::clicked, this, [=]() {
+            ui->stackedWidget->setCurrentIndex(1);  // Example: switch to the second page (index 1)
+        });
+
 
 
         for(const QCameraInfo &infor : QCameraInfo::availableCameras())
@@ -60,33 +66,92 @@ gestion_candidats::~gestion_candidats()
 
 void gestion_candidats::on_Ajouter_clicked()
 {
-   QString cin=ui->lineEdit_CIN->text();
-   QString nom=ui->lineEdit_NOM->text();
-   QString prenom=ui->lineEdit_PRENOM->text();
-   QString email=ui->lineEdit_EMAIL->text();
-   QDate date= ui-> dateEdit->date();
-   QString telephone=ui->lineEdit_TELEPHONE->text();
-   Candidat candidat( nom,prenom, email,cin,date, telephone );
-   bool test=candidat.create();
-   if(test)
-       {
-           ui->tableView_candidats->setModel((candidat.readAll()));
-          QMessageBox::information(nullptr,QObject::tr("OK"),
-                                   QObject::tr("Ajout effectué\n"
-                                               "Click Cancel to exit."),QMessageBox::Cancel);
-       }
-          else
-              QMessageBox::critical(nullptr,QObject::tr("Not OK"),
-                                       QObject::tr("Ajout non effectué\n"
-                                                 "Click Cancel to exit."),QMessageBox::Cancel);
+    QString cin = ui->lineEdit_CIN->text();
+    QString nom = ui->lineEdit_NOM->text();
+    QString prenom = ui->lineEdit_PRENOM->text();
+    QString email = ui->lineEdit_EMAIL->text();
+    QDate dateNaissance = ui->dateEdit->date();
+    QString telephone = ui->lineEdit_TELEPHONE->text();
 
-         ui->lineEdit_EMAIL->clear();
-         ui->lineEdit_NOM->clear();
-         ui->lineEdit_PRENOM->clear();
-         ui->lineEdit_EMAIL->clear();
-         ui->dateEdit->clear();
-         ui->lineEdit_TELEPHONE->clear();
+    // Initialize an empty string for error messages
+    QString errorMsg = "";
+
+    // Validate CIN: 8 digits only
+    QRegExp cinRegex("\\d{8}");
+    if (!cinRegex.exactMatch(cin)) {
+        errorMsg += "Le CIN doit contenir exactement 8 chiffres.\n";
+    }
+
+    // Validate Telephone: 8 digits only
+    QRegExp telRegex("\\d{8}");
+    if (!telRegex.exactMatch(telephone)) {
+        errorMsg += "Le numéro de téléphone doit contenir exactement 8 chiffres.\n";
+    }
+
+    // Validate Nom: Letters only
+    QRegExp nameRegex("^[A-Za-zÀ-ÿ]+$");
+    if (!nameRegex.exactMatch(nom)) {
+        errorMsg += "Le nom doit contenir uniquement des lettres.\n";
+    }
+
+    // Validate Prenom: Letters only
+    if (!nameRegex.exactMatch(prenom)) {
+        errorMsg += "Le prénom doit contenir uniquement des lettres.\n";
+    }
+
+    // Validate Email: Basic email format
+    QRegExp emailRegex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,}$");
+    if (!emailRegex.exactMatch(email)) {
+        errorMsg += "Veuillez entrer une adresse e-mail valide.\n";
+    }
+
+    // Validate Age: Between 18 and 30
+    int currentYear = QDate::currentDate().year();
+    int birthYear = dateNaissance.year();
+    int age = currentYear - birthYear;
+
+    // Adjust for the exact day of birth not yet occurring in the current year
+    if (QDate::currentDate() < dateNaissance.addYears(age)) {
+        age--;
+    }
+
+    if (age < 18) {
+        errorMsg += "Le candidat est âgé(e) de moins de 18 ans.\n";
+    } else if (age > 30) {
+        errorMsg += "Le candidat est âgé(e) de plus de 30 ans.\n";
+    }
+
+    // If there are errors, show them in a message box and return
+    if (!errorMsg.isEmpty()) {
+        QMessageBox::critical(this, "Erreur", errorMsg);
+        return;
+    }
+
+    // Create the Candidat if all validations pass
+    Candidat candidat(nom, prenom, email, cin, dateNaissance, telephone.toInt());
+    bool test = candidat.create();
+    if (test) {
+        ui->tableView_candidats->setModel(candidat.readAll());
+        QMessageBox::information(nullptr, QObject::tr("OK"),
+                                 QObject::tr("Ajout effectué\n"
+                                             "Click Cancel to exit."), QMessageBox::Cancel);
+    } else {
+        QMessageBox::critical(nullptr, QObject::tr("Not OK"),
+                              QObject::tr("Ajout non effectué\n"
+                                          "Click Cancel to exit."), QMessageBox::Cancel);
+    }
+
+    // Clear the form fields
+    ui->lineEdit_EMAIL->clear();
+    ui->lineEdit_NOM->clear();
+    ui->lineEdit_PRENOM->clear();
+    ui->lineEdit_EMAIL->clear();
+    ui->dateEdit->clear();
+    ui->lineEdit_TELEPHONE->clear();
 }
+
+
+
 void gestion_candidats::on_tableView_activated(const QModelIndex &index)
 {
                    ui->id_label->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),0)).toString());
@@ -131,7 +196,7 @@ void gestion_candidats::on_Modifier_clicked()
     QString nom = ui->lineEdit_NOM2->text();
     QString prenom = ui->lineEdit_PRENOM2->text();
     QString email = ui->lineEdit_EMAIL2->text();
-    QString telephone = ui->lineEdit_TELEPHONE_2->text();
+    int telephone = ui->lineEdit_TELEPHONE_2->text().toInt();
     QDate datenaissance = ui->dateEdit_2->date();  // Make sure to correctly get the date from QDateEdit
 
     candidat.setNom(nom);
@@ -266,56 +331,80 @@ void gestion_candidats::on_inprimer_clicked()
 
 void gestion_candidats::on_statistique_clicked()
 {
-    QSqlQueryModel * model= new QSqlQueryModel();
-                                model->setQuery("SELECT * FROM Candidat WHERE datenaissance BETWEEN TO_DATE('1995-01-01', 'YYYY-MM-DD') AND TO_DATE('2000-12-31', 'YYYY-MM-DD')");
-                                float nbr1=model->rowCount();
-                                model->setQuery("select * from Candidat WHERE datenaissance > TO_DATE('2000-12-31', 'YYYY-MM-DD')");
-                                float nbr2=model->rowCount();
-                                model->setQuery("select * from Candidat where datenaissance < TO_DATE('1995-01-01', 'YYYY-MM-DD')");
-                                float nbr3=model->rowCount();
-                                float total=nbr1+nbr2+nbr3;
-                                QString a=QString(" Candidats entre 24-29 ans"+  QString::number((nbr1*100)/total,'f',2)+"%" );
-                                QString b=QString(" Candidats moins que 24 ans"+  QString::number((nbr2*100)/total,'f',2)+"%" );
-                                QString c=QString(" Candidats plus que 29 ans"+ QString::number((nbr3*100)/total,'f',2)+"%" );
-                                QPieSeries *series = new QPieSeries();
-                                series->append(a,nbr1);
-                                series->append(b,nbr2);
-                                series->append(c,nbr3);
-                        if (nbr1!=0)
-                        {QPieSlice *slice = series->slices().at(0);
-                         slice->setLabelVisible();
-                         slice->setPen(QPen());}
-                        if ( nbr2!=0)
-                        {
-                                 // Add label, explode and define brush for 2nd slice
-                                 QPieSlice *slice1 = series->slices().at(1);
-                                 //slice1->setExploded();
-                                 slice1->setLabelVisible();
-                        }
-                        if(nbr3!=0)
-                        {
-                                 // Add labels to rest of slices
-                                 QPieSlice *slice2 = series->slices().at(2);
-                                 //slice1->setExploded();
-                                 slice2->setLabelVisible();
-                        }
-                                // Create the chart widget
-                                QChart *chart = new QChart();
-                                // Add data to chart with title and hide legend
-                                chart->addSeries(series);
-                                chart->setTitle("Statistique des prix untaires par marchandises ");
-                                chart->legend()->hide();
-                                // Used to display the chart
-                                QChartView *chartView = new QChartView(chart);
-                                chartView->setRenderHint(QPainter::Antialiasing);
-                                chartView->resize(1000,500);
-                                chartView->show();
+    // Get the current date
+    QDate currentDate = QDate::currentDate();
+
+    // Calculate the birthdate ranges based on the current date
+    QDate date22 = currentDate.addYears(-18);  // 18 years old (youngest)
+    QDate date18 = currentDate.addYears(-22);  // 22 years old
+    QDate date26 = currentDate.addYears(-23);  // 23 years old
+    QDate date30 = currentDate.addYears(-26);  // 26 years old
+    QDate dateOver26 = currentDate.addYears(-30); // Older than 30
+
+    QSqlQueryModel * model = new QSqlQueryModel();
+
+    // Query for candidates between 18 and 22 years old
+    QString query1 = QString("SELECT * FROM Candidat WHERE datenaissance BETWEEN TO_DATE('%1', 'YYYY-MM-DD') AND TO_DATE('%2', 'YYYY-MM-DD')")
+                        .arg(date18.toString("yyyy-MM-dd")).arg(date22.toString("yyyy-MM-dd"));
+    model->setQuery(query1);
+    float nbr1 = model->rowCount();
+
+    // Query for candidates between 23 and 26 years old
+    QString query2 = QString("SELECT * FROM Candidat WHERE datenaissance BETWEEN TO_DATE('%1', 'YYYY-MM-DD') AND TO_DATE('%2', 'YYYY-MM-DD')")
+                        .arg(date26.toString("yyyy-MM-dd")).arg(date18.toString("yyyy-MM-dd"));
+    model->setQuery(query2);
+    float nbr2 = model->rowCount();
+
+    // Query for candidates older than 26
+    QString query3 = QString("SELECT * FROM Candidat WHERE datenaissance < TO_DATE('%1', 'YYYY-MM-DD')")
+                        .arg(date30.toString("yyyy-MM-dd"));
+    model->setQuery(query3);
+    float nbr3 = model->rowCount();
+
+    // Total number of candidates
+    float total = nbr1 + nbr2 + nbr3;
+
+    // Prepare the labels for the pie chart
+    QString a = QString("Candidats entre 18-22 ans: %1%").arg(QString::number((nbr1 * 100) / total, 'f', 2));
+    QString b = QString("Candidats entre 23-26 ans: %1%").arg(QString::number((nbr2 * 100) / total, 'f', 2));
+    QString c = QString("Candidats plus que 26 ans: %1%").arg(QString::number((nbr3 * 100) / total, 'f', 2));
+
+    // Create the pie chart series
+    QPieSeries *series = new QPieSeries();
+    series->append(a, nbr1);
+    series->append(b, nbr2);
+    series->append(c, nbr3);
+
+    // Show labels for non-zero slices
+    if (nbr1 != 0) {
+        QPieSlice *slice = series->slices().at(0);
+        slice->setLabelVisible();
+        slice->setPen(QPen());
+    }
+
+    if (nbr2 != 0) {
+        QPieSlice *slice1 = series->slices().at(1);
+        slice1->setLabelVisible();
+    }
+
+    if (nbr3 != 0) {
+        QPieSlice *slice2 = series->slices().at(2);
+        slice2->setLabelVisible();
+    }
+
+    // Create the chart
+    QChart *chart = new QChart();
+    chart->addSeries(series);
+    chart->setTitle("Statistique des âges des candidats");
+    chart->legend()->hide();
+
+    // Display the chart
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->resize(1000, 500);
+    chartView->show();
 }
 
-void gestion_candidats::on_pushButton_clicked()
-{
-    //gestionTeacherDialog->show();
-}
 
 void gestion_candidats::start_camera()
 {
