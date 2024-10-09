@@ -4,7 +4,6 @@
 #include "candidat.h"
 #include<QString>
 #include<QMessageBox>
-#include<QSqlQuery>
 #include <QPainter>
 #include <QTextDocument>
 #include<QTextStream>
@@ -14,6 +13,8 @@
 #include<QPrintDialog>
 #include<QDateTime>
 #include<QtCharts>
+#include <QSqlError>
+#include <QSqlQuery>
 #include<QChartView>
 
 
@@ -25,6 +26,8 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
     ui->setupUi(this);
         ui->tableView_candidats->setModel((candidat.readAll()));
         ui->tableView_offres->setModel((offreEmploi.readAll()));
+        ui->stackedWidget->setCurrentIndex(0); // Change this index as needed
+        populateOffreEmploiList();
         // Connect the button signal to the slot
         connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
         connect(ui->tableView_offres, &QTableView::activated, this, &gestion_candidats::on_tableView_offres_activated);
@@ -37,6 +40,10 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         connect(ui->btn_tri_id, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_id_clicked()));
         connect(ui->btn_tri_date, SIGNAL(clicked()), this, SLOT(on_tri_date_clicked()));
         connect(ui->btn_imprimer_candidat,SIGNAL(clicked()),this,SLOT(on_inprimer_clicked()));
+
+        connect(ui->label_reset,SIGNAL(clicked()),this,SLOT(reset()));
+        connect(ui->label_reset_2,SIGNAL(clicked()),this,SLOT(resetoffres()));
+
         connect(ui->btn_imprimer_candidat_2,SIGNAL(clicked()),this,SLOT(on_imprimer_offre()));
         connect(ui->btn_statistique_candidat,SIGNAL(clicked()),this,SLOT(on_statistique_clicked()));
         connect(ui->btn_start_camera,SIGNAL(clicked()),this,SLOT(on_btn_start_camera_clicked()));
@@ -44,22 +51,22 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         connect(ui->Ajouter,SIGNAL(clicked()),this,SLOT(on_sendEmailButton_clicked()));
         connect(ui->Ajouter_2,SIGNAL(clicked()),this,SLOT(on_Ajouter_OffreEmploi_clicked()));
         connect(ui->btn_gestion_candidats, &QPushButton::clicked, this, [=]() {
-            ui->stackedWidget->setCurrentIndex(0);  // Example: switch to the second page (index 1)
-        });
-        connect(ui->btn_gestion_offreEmploi, &QPushButton::clicked, this, [=]() {
             ui->stackedWidget->setCurrentIndex(1);  // Example: switch to the second page (index 1)
         });
+        connect(ui->listWidget_offres, &QListWidget::itemChanged, this, &gestion_candidats::on_listWidgetOffres_itemChanged);
+
+        connect(ui->btn_gestion_offreEmploi, &QPushButton::clicked, this, [=]() {
+            ui->stackedWidget->setCurrentIndex(2);  // Example: switch to the second page (index 1)
+        });
+        connect(ui->buttonUpdateOffres, &QPushButton::clicked, this, &gestion_candidats::on_updateOffresButtonClicked);
+
 
         connect(ui->btn_recherche_offre, SIGNAL(clicked()), this, SLOT(on_recherche_offre_clicked()));
         connect(ui->btn_tri_titre, SIGNAL(clicked()), this, SLOT(on_tri_titre_clicked()));
         connect(ui->btn_tri_date_expiration, SIGNAL(clicked()), this, SLOT(on_tri_dateexpiration_clicked()));
         connect(ui->btn_tri_entreprise, SIGNAL(clicked()), this, SLOT(on_tri_Entreprise_clicked()));
         connect(ui->btn_statistique_candidat_2,SIGNAL(clicked()),this,SLOT(on_statistique_offre_clicked()));
-
-
-
-
-
+        connect(ui->buttonUpdateCandidats, &QPushButton::clicked, this, &gestion_candidats::on_updateCandidatsButtonClicked);
 
            gouvernorates << "Ariana" << "Béja" << "Ben Arous" << "Bizerte"
                          << "Gabès" << "Gafsa" << "Jendouba" << "Kairouan"
@@ -80,6 +87,7 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         M_Camera.reset(new QCamera(QCameraInfo::defaultCamera()));
         M_Camera->setViewfinder(ui->camera_view);
 
+        populateCandidatsList();
 
 
 
@@ -88,6 +96,15 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
 gestion_candidats::~gestion_candidats()
 {
     delete ui;
+}
+
+void gestion_candidats::reset()
+{
+    ui->tableView_candidats->setModel((candidat.readAll()));
+}
+void gestion_candidats::resetoffres()
+{
+    ui->tableView_offres->setModel((offreEmploi.readAll()));
 }
 
 
@@ -168,6 +185,7 @@ void gestion_candidats::on_Ajouter_clicked()
                                           "Click Cancel to exit."), QMessageBox::Cancel);
     }
 
+    populateOffreEmploiList();
     // Clear the form fields
     ui->lineEdit_EMAIL->clear();
     ui->lineEdit_NOM->clear();
@@ -181,15 +199,19 @@ void gestion_candidats::on_Ajouter_clicked()
 
 void gestion_candidats::on_tableView_activated(const QModelIndex &index)
 {
-                   ui->id_label->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),0)).toString());
-                   ui->lineEdit_NOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),1)).toString());
-                   ui->lineEdit_PRENOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),2)).toString());
-                   ui->lineEdit_EMAIL2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),3)).toString());
-                   ui->lineEdit_CIN2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),5)).toString());
-                   ui->lineEdit_TELEPHONE_2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),4)).toString());
-                   ui->dateEdit_2->setDate(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(),6)).toDate());
+    QString candidatId = ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 0)).toString();
+    ui->id_label->setText(candidatId);
+    ui->lineEdit_NOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 1)).toString());
+    ui->lineEdit_PRENOM2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 2)).toString());
+    ui->lineEdit_EMAIL2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 3)).toString());
+    ui->lineEdit_CIN2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 5)).toString());
+    ui->lineEdit_TELEPHONE_2->setText(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 4)).toString());
+    ui->dateEdit_2->setDate(ui->tableView_candidats->model()->data(ui->tableView_candidats->model()->index(index.row(), 6)).toDate());
 
+    // Update the checkboxes based on the selected candidat
+    updateOffresCheckboxes(candidatId.toInt());
 }
+
 
 void gestion_candidats::on_Supprimer_clicked()
 {
@@ -223,16 +245,72 @@ void gestion_candidats::on_Modifier_clicked()
     QString nom = ui->lineEdit_NOM2->text();
     QString prenom = ui->lineEdit_PRENOM2->text();
     QString email = ui->lineEdit_EMAIL2->text();
-    int telephone = ui->lineEdit_TELEPHONE_2->text().toInt();
-    QDate datenaissance = ui->dateEdit_2->date();  // Make sure to correctly get the date from QDateEdit
+    QString telephone = ui->lineEdit_TELEPHONE_2->text();
+    QDate dateNaissance = ui->dateEdit_2->date();  // Correctly getting the date from QDateEdit
 
+    // Initialize an empty string for error messages
+    QString errorMsg = "";
+
+    // Validate CIN: 8 digits only
+    QRegExp cinRegex("\\d{8}");
+    if (!cinRegex.exactMatch(cin)) {
+        errorMsg += "Le CIN doit contenir exactement 8 chiffres.\n";
+    }
+
+    // Validate Telephone: 8 digits only
+    QRegExp telRegex("\\d{8}");
+    if (!telRegex.exactMatch(telephone)) {
+        errorMsg += "Le numéro de téléphone doit contenir exactement 8 chiffres.\n";
+    }
+
+    // Validate Nom: Letters only
+    QRegExp nameRegex("^[A-Za-zÀ-ÿ]+$");
+    if (!nameRegex.exactMatch(nom)) {
+        errorMsg += "Le nom doit contenir uniquement des lettres.\n";
+    }
+
+    // Validate Prenom: Letters only
+    if (!nameRegex.exactMatch(prenom)) {
+        errorMsg += "Le prénom doit contenir uniquement des lettres.\n";
+    }
+
+    // Validate Email: Basic email format
+    QRegExp emailRegex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,}$");
+    if (!emailRegex.exactMatch(email)) {
+        errorMsg += "Veuillez entrer une adresse e-mail valide.\n";
+    }
+
+    // Validate Age: Between 18 and 30
+    int currentYear = QDate::currentDate().year();
+    int birthYear = dateNaissance.year();
+    int age = currentYear - birthYear;
+
+    // Adjust for the exact day of birth not yet occurring in the current year
+    if (QDate::currentDate() < dateNaissance.addYears(age)) {
+        age--;
+    }
+
+    if (age < 18) {
+        errorMsg += "Le candidat est âgé(e) de moins de 18 ans.\n";
+    } else if (age > 30) {
+        errorMsg += "Le candidat est âgé(e) de plus de 30 ans.\n";
+    }
+
+    // If there are errors, show them in a message box and return
+    if (!errorMsg.isEmpty()) {
+        QMessageBox::critical(this, "Erreur", errorMsg);
+        return;
+    }
+
+    // Set the new values in the Candidat object
     candidat.setNom(nom);
     candidat.setPrenom(prenom);
     candidat.setEmail(email);
     candidat.setCIN(cin);
-    candidat.setDateNaissance(datenaissance);
-    candidat.setTelephone(telephone);
+    candidat.setDateNaissance(dateNaissance);
+    candidat.setTelephone(telephone.toInt());
 
+    // Perform the update
     bool test = candidat.update(id);
 
     if (test) {
@@ -254,6 +332,7 @@ void gestion_candidats::on_Modifier_clicked()
     ui->lineEdit_TELEPHONE_2->clear();
     ui->dateEdit_2->setDate(QDate::currentDate()); // Set default date after clearing
 }
+
 
 
 void gestion_candidats::on_Gestion_CANDIDAT_tabBarClicked(int index)
@@ -473,8 +552,14 @@ void gestion_candidats::on_Ajouter_OffreEmploi_clicked()
     // Initialize an empty string for error messages
     QString errorMsg = "";
 
+    // Validate the expiration date
+    if (dateExpiration <= QDate::currentDate()) {
+        QMessageBox::warning(nullptr, QObject::tr("Invalid Date"),
+                             QObject::tr("La date d'expiration doit être supérieure à la date actuelle."), QMessageBox::Cancel);
+        return; // Exit if the date is invalid
+    }
 
-    // Create the Candidat if all validations pass
+    // Create the OffreEmploi if all validations pass
     OffreEmploi offreEmploi(titre, description, entreprise, dateExpiration, lieu);
     bool test = offreEmploi.create();
     if (test) {
@@ -488,6 +573,8 @@ void gestion_candidats::on_Ajouter_OffreEmploi_clicked()
                                           "Click Cancel to exit."), QMessageBox::Cancel);
     }
 
+    populateOffreEmploiList();
+
     // Clear the form fields
     ui->lineEdit_TITRE->clear();
     ui->lineEdit_DESCRIPTION->clear();
@@ -498,16 +585,22 @@ void gestion_candidats::on_Ajouter_OffreEmploi_clicked()
 
 
 
+
 void gestion_candidats::on_tableView_offres_activated(const QModelIndex &index)
 {
-                   ui->id_label_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),0)).toString());
+
+    QString offreId = ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(), 0)).toString();
+        ui->id_label_2->setText(offreId); // Assuming you have a label for OffreEmploi ID
                    ui->lineEdit_TITRE_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),1)).toString());
                    ui->lineEdit_DESCRIPTION_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),2)).toString());
                    ui->lineEdit_ENTREPRISE_2->setText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),3)).toString());
                    ui->comboBox_2->setCurrentText(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),5)).toString());
                    ui->dateEdit_EXPIRATION_2->setDate(ui->tableView_offres->model()->data(ui->tableView_offres->model()->index(index.row(),4)).toDate());
+                   updateCandidatsList(offreId.toInt());
 
 }
+
+
 
 
 
@@ -555,23 +648,29 @@ void gestion_candidats::on_Modifier_offre_clicked()
     QString description = ui->lineEdit_DESCRIPTION_2->text();
     QString entreprise = ui->lineEdit_ENTREPRISE_2->text();
     QString lieu = ui->comboBox_2->currentText();
-    QDate dateExpiration = ui->dateEdit_EXPIRATION_2->date();  // Make sure to correctly get the date from QDateEdit
+    QDate dateExpiration = ui->dateEdit_EXPIRATION_2->date();  // Correctly getting the date
 
+    // Validate the expiration date
+    if (dateExpiration <= QDate::currentDate()) {
+        QMessageBox::warning(nullptr, QObject::tr("Invalid Date"),
+                             QObject::tr("La date d'expiration doit être supérieure à la date actuelle."), QMessageBox::Cancel);
+        return; // Exit if the date is invalid
+    }
+
+    // Set the new values in the OffreEmploi object
     offreEmploi.setTitre(titre);
     offreEmploi.setDescription(description);
     offreEmploi.setEntreprise(entreprise);
     offreEmploi.setLieu(lieu);
     offreEmploi.setDateExpiration(dateExpiration);
 
-
-
-
+    // Perform the update
     bool test = offreEmploi.update(id);
 
     if (test) {
         ui->tableView_offres->setModel(offreEmploi.readAll());  // Refresh table
-        QMessageBox::information(nullptr, QObject::tr("modifier un offreEmploi"),
-                                 QObject::tr("offreEmploi modifié.\nClick Cancel to exit."),
+        QMessageBox::information(nullptr, QObject::tr("Modifier une offreEmploi"),
+                                 QObject::tr("OffreEmploi modifié.\nClick Cancel to exit."),
                                  QMessageBox::Cancel);
     } else {
         QMessageBox::critical(nullptr, QObject::tr("Modifier offreEmploi"),
@@ -585,7 +684,10 @@ void gestion_candidats::on_Modifier_offre_clicked()
     ui->lineEdit_ENTREPRISE_2->clear();
     ui->comboBox_2->setCurrentText(lieu);
     ui->dateEdit_EXPIRATION_2->clear();
+
+    populateOffreEmploiList();
 }
+
 
 void gestion_candidats::showEvent(QShowEvent *event) {
     // Ensure the base class showEvent is called
@@ -742,4 +844,306 @@ void gestion_candidats::on_imprimer_offre()
 
     delete document;
 }
+
+
+void gestion_candidats::populateOffreEmploiList() {
+    // Clear the QListWidget first
+    ui->listWidget_offres->clear();
+
+    // Fetch all available OffreEmploi from the database
+    QSqlQuery query("SELECT id, titre FROM OffreEmploi");
+    while (query.next()) {
+        QString id = query.value(0).toString();
+        QString titre = query.value(1).toString();
+
+        // Create a QListWidgetItem with a checkbox
+        QListWidgetItem *item = new QListWidgetItem(titre, ui->listWidget_offres);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked); // Default unchecked
+        item->setData(Qt::UserRole, id); // Store the OffreEmploi id
+    }
+}
+
+
+
+void gestion_candidats::updateOffresCheckboxes(int candidatId)
+{
+    // Fetch the assigned offres for the selected candidat
+    QSqlQuery query;
+    query.prepare("SELECT ID_OFFRE FROM CANDIDAT_OFFRE WHERE ID_CANDIDAT = :candidatId");
+    query.bindValue(":candidatId", candidatId);
+
+    if (query.exec()) {
+        // Clear all checkboxes first
+        for (int i = 0; i < ui->listWidget_offres->count(); ++i) {
+            QListWidgetItem *item = ui->listWidget_offres->item(i);
+            item->setCheckState(Qt::Unchecked); // Reset to unchecked
+        }
+
+        while (query.next()) {
+            QString offreId = query.value(0).toString();
+            // Check the corresponding checkbox in the list widget
+            for (int i = 0; i < ui->listWidget_offres->count(); ++i) {
+                QListWidgetItem *item = ui->listWidget_offres->item(i);
+                if (item->data(Qt::UserRole).toString() == offreId) {
+                    item->setCheckState(Qt::Checked); // Check the item if it matches
+                    break; // Break the inner loop as we found the match
+                }
+            }
+        }
+    } else {
+        QMessageBox::critical(this, "Database Error", query.lastError().text());
+    }
+}
+
+
+
+void gestion_candidats::on_listWidgetOffres_itemChanged(QListWidgetItem *item)
+{
+    // Retrieve the ID stored in the UserRole
+        QString candidatIdStr = ui->id_label->text();
+        QString offreIdStr = item->data(Qt::UserRole).toString();
+
+        // Convert QString to int
+        bool okCandidat, okOffre;
+        int candidatId = candidatIdStr.toInt(&okCandidat);
+        int offreId = offreIdStr.toInt(&okOffre);
+
+        // Ensure both conversions succeeded
+        if (!okCandidat || !okOffre) {
+            qWarning() << "Invalid candidatId or offreId, not a number"; // Log warning
+            return;
+        }
+
+        // Check for existence before inserting
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT COUNT(*) FROM CANDIDAT_OFFRE WHERE ID_CANDIDAT = :candidatId AND ID_OFFRE = :offreId");
+        checkQuery.bindValue(":candidatId", candidatId);
+        checkQuery.bindValue(":offreId", offreId);
+
+        if (checkQuery.exec() && checkQuery.next()) {
+            int count = checkQuery.value(0).toInt();
+
+            if (item->checkState() == Qt::Checked) {
+                if (count == 0) {
+                    // Add the assignment to the CANDIDAT_OFFRE table only if it doesn't exist
+                    QSqlQuery query;
+                    query.prepare("INSERT INTO CANDIDAT_OFFRE (ID_CANDIDAT, ID_OFFRE) VALUES (:candidatId, :offreId)");
+                    query.bindValue(":candidatId", candidatId);
+                    query.bindValue(":offreId", offreId);
+                    if (!query.exec()) {
+                        qWarning() << "Failed to execute query:" << query.lastError().text();
+                    }
+                }
+            } else {
+                // Remove the assignment from the CANDIDAT_OFFRE table
+                QSqlQuery query;
+                query.prepare("DELETE FROM CANDIDAT_OFFRE WHERE ID_CANDIDAT = :candidatId AND ID_OFFRE = :offreId");
+                query.bindValue(":candidatId", candidatId);
+                query.bindValue(":offreId", offreId);
+                if (!query.exec()) {
+                    qWarning() << "Failed to execute query:" << query.lastError().text();
+                }
+            }
+        } else {
+            QMessageBox::critical(this, "Database Error", checkQuery.lastError().text());
+        }
+}
+
+void gestion_candidats::on_updateOffresButtonClicked()
+{
+    // Retrieve the ID of the selected candidat from the label
+    QString candidatIdStr = ui->id_label->text();
+
+    // Convert the ID to an integer
+    bool ok;
+    int candidatId = candidatIdStr.toInt(&ok);
+
+    if (!ok) {
+        QMessageBox::warning(this, "Invalid Selection", "Please select a valid candidat.");
+        return; // Exit if the ID is not valid
+    }
+
+    // Iterate through the list widget items and update the database
+    for (int i = 0; i < ui->listWidget_offres->count(); ++i) {
+        QListWidgetItem *item = ui->listWidget_offres->item(i);
+        QString offreIdStr = item->data(Qt::UserRole).toString(); // Get the ID stored in UserRole
+        int offreId = offreIdStr.toInt();
+
+        // Check if the item is checked
+        if (item->checkState() == Qt::Checked) {
+            // Add the assignment if it does not already exist
+            QSqlQuery checkQuery;
+            checkQuery.prepare("SELECT COUNT(*) FROM CANDIDAT_OFFRE WHERE ID_CANDIDAT = :candidatId AND ID_OFFRE = :offreId");
+            checkQuery.bindValue(":candidatId", candidatId);
+            checkQuery.bindValue(":offreId", offreId);
+            checkQuery.exec();
+            checkQuery.next();
+
+            if (checkQuery.value(0).toInt() == 0) { // If not already assigned
+                QSqlQuery insertQuery;
+                insertQuery.prepare("INSERT INTO CANDIDAT_OFFRE (ID_CANDIDAT, ID_OFFRE) VALUES (:candidatId, :offreId)");
+                insertQuery.bindValue(":candidatId", candidatId);
+                insertQuery.bindValue(":offreId", offreId);
+
+                if (!insertQuery.exec()) {
+                    qWarning() << "Failed to execute insert query:" << insertQuery.lastError().text();
+                }
+            }
+        } else {
+            // Remove the assignment if it is unchecked
+            QSqlQuery deleteQuery;
+            deleteQuery.prepare("DELETE FROM CANDIDAT_OFFRE WHERE ID_CANDIDAT = :candidatId AND ID_OFFRE = :offreId");
+            deleteQuery.bindValue(":candidatId", candidatId);
+            deleteQuery.bindValue(":offreId", offreId);
+
+            if (!deleteQuery.exec()) {
+                qWarning() << "Failed to execute delete query:" << deleteQuery.lastError().text();
+            }
+        }
+    }
+
+    // Refresh the checkbox states after updating the database
+    updateOffresCheckboxes(candidatId);
+}
+
+
+
+void gestion_candidats::on_updateCandidatsButtonClicked()
+{
+    // Retrieve the ID of the selected offer from the label
+    QString offreIdStr = ui->id_label_2->text();
+
+    // Convert the ID to an integer
+    bool ok;
+    int offreId = offreIdStr.toInt(&ok);
+
+    if (!ok) {
+        QMessageBox::warning(this, "Invalid Selection", "Please select a valid offre.");
+        return; // Exit if the ID is not valid
+    }
+
+    // Get the list of candidates
+    QList<QListWidgetItem*> items = ui->listWidget_candidats->findItems(QString(), Qt::MatchContains);
+
+    QSqlQuery query;
+
+    // Start a transaction for safety
+    QSqlDatabase::database().transaction();
+
+    // First, remove all associations for this offer
+    query.prepare("DELETE FROM CANDIDAT_OFFRE WHERE ID_OFFRE = :offreId");
+    query.bindValue(":offreId", offreId);
+    if (!query.exec()) {
+        QMessageBox::critical(this, "Database Error", query.lastError().text());
+        return; // Exit if the query fails
+    }
+
+    // Now add the new associations based on the checkbox states
+    for (QListWidgetItem* item : items) {
+        QString candidatId = item->text();
+        if (item->checkState() == Qt::Checked) {
+            // Candidate is checked, insert into CANDIDAT_OFFRE
+            query.prepare("INSERT INTO CANDIDAT_OFFRE (ID_CANDIDAT, ID_OFFRE) VALUES (:candidatId, :offreId)");
+            query.bindValue(":candidatId", candidatId);
+            query.bindValue(":offreId", offreId);
+            if (!query.exec()) {
+                QMessageBox::critical(this, "Database Error", query.lastError().text());
+                return; // Exit if the query fails
+            }
+        }
+    }
+
+    // Commit the transaction
+    if (!QSqlDatabase::database().commit()) {
+        QMessageBox::critical(this, "Database Error", QSqlDatabase::database().lastError().text());
+        return; // Exit if commit fails
+    }
+
+    // Refresh the candidates list to reflect the updates
+    updateCandidatsList(offreId);
+}
+
+
+
+void gestion_candidats::updateCandidatsList(int offreId)
+{
+    // Clear previous entries in the list widget
+    ui->listWidget_candidats->clear();
+
+    // Create separate query objects
+    QSqlQuery candidatsQuery;
+    QSqlQuery assignedQuery;
+
+    // Fetch all candidates from the CANDIDAT table
+    if (!candidatsQuery.exec("SELECT id FROM CANDIDAT")) {
+        QMessageBox::critical(this, "Database Error", candidatsQuery.lastError().text());
+        return; // Exit if the query fails
+    }
+
+    QSet<QString> assignedCandidates; // Use a set to store assigned candidates' IDs for quick lookup
+
+    // Fetch the assigned candidates for the selected offer
+    assignedQuery.prepare("SELECT ID_CANDIDAT FROM CANDIDAT_OFFRE WHERE ID_OFFRE = :offreId");
+    assignedQuery.bindValue(":offreId", offreId);
+
+    if (assignedQuery.exec()) {
+        while (assignedQuery.next()) {
+            assignedCandidates.insert(assignedQuery.value(0).toString());
+        }
+    } else {
+        QMessageBox::critical(this, "Database Error", assignedQuery.lastError().text());
+        return; // Exit if the query fails
+    }
+
+    // Now populate the list with all candidates
+    while (candidatsQuery.next()) {
+        QString candidatId = candidatsQuery.value(0).toString();
+        // Create a new list widget item for each candidate ID
+        QListWidgetItem *item = new QListWidgetItem(candidatId);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable); // Enable checkbox
+
+        // Check if this candidate is assigned to the selected OffreEmploi
+        if (assignedCandidates.contains(candidatId)) {
+            item->setCheckState(Qt::Checked); // Set to checked if assigned
+        } else {
+            item->setCheckState(Qt::Unchecked); // Set to unchecked if not assigned
+        }
+
+        ui->listWidget_candidats->addItem(item);
+    }
+}
+
+
+
+
+void gestion_candidats::populateCandidatsList()
+{
+    ui->listWidget_candidats->clear();
+    qDebug() << "Cleared previous candidates from list.";
+
+    QSqlQuery query;
+    query.prepare("SELECT id FROM CANDIDAT");
+
+    if (!query.exec()) {
+        qDebug() << "Query execution failed: in populateCandidatsList() " << query.lastError().text();
+        QMessageBox::critical(this, "Database Error", query.lastError().text());
+        return;  // Exit if the query fails
+    }
+
+    while (query.next()) {
+        QString candidatId = query.value(0).toString();
+        qDebug() << "Retrieved candidate ID:" << candidatId;
+
+        // Create a new list widget item with a checkbox
+        QListWidgetItem *item = new QListWidgetItem(candidatId);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable); // Enable checkbox
+        item->setCheckState(Qt::Unchecked); // Default to unchecked
+        ui->listWidget_candidats->addItem(item);
+    }
+
+    qDebug() << "Successfully populated candidates list with IDs.";
+}
+
+
 

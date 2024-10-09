@@ -28,10 +28,12 @@ public:
 
 
 private slots:
+    void populateOffreEmploiList();
     void on_Ajouter_clicked();
-
+    void  updateOffresCheckboxes(int candidatId);
     void on_Supprimer_clicked();
-
+    void reset();
+    void resetoffres();
     void on_tableView_activated(const QModelIndex &index);
 
     void on_Modifier_clicked();
@@ -39,7 +41,7 @@ private slots:
     void on_Gestion_CANDIDAT_tabBarClicked(int index);
 
     void on_recherche_clicked();
-
+    void on_updateOffresButtonClicked();
     void on_tri_date_clicked();
 
     void on_pushButton_tri_nom_clicked();
@@ -49,16 +51,15 @@ private slots:
     void on_inprimer_clicked();
 
     void on_statistique_clicked();
-
+    void populateCandidatsList();
     void on_pushButton_clicked();
-
     void start_camera();
     void stop_camera();
     void on_sendEmailButton_clicked() ;
     void sendConfirmationEmail(const QString &email);
-
+    void updateCandidatsList(int offreId);
     void on_btn_start_camera_clicked();
-
+    void on_updateCandidatsButtonClicked();
     void on_btn_stop_camera_clicked();
     void on_Ajouter_OffreEmploi_clicked();
     void on_tableView_offres_activated(const QModelIndex &index);
@@ -69,7 +70,7 @@ private slots:
     void on_recherche_offre_clicked();
     void on_statistique_offre_clicked();
     void on_tri_dateexpiration_clicked();
-
+    void on_listWidgetOffres_itemChanged(QListWidgetItem *item);
     void on_tri_titre_clicked();
     void on_imprimer_offre();
     void on_tri_Entreprise_clicked();
