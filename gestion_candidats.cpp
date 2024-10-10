@@ -32,6 +32,7 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         ui->stackedWidget->setCurrentIndex(0); // Change this index as needed
         populateOffreEmploiList();
         ui->btn_stop_camera->hide();
+        ui->label_13->hide();
         ui->checkicon->hide();
         // Connect the button signal to the slot
         connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
@@ -568,12 +569,14 @@ void gestion_candidats::on_btn_start_face_detection_clicked()
                        ui->checkicon->show();
                        ui->checkicon_2->hide();
                        ui->btn_face_detection->hide();
+                       ui->label_13->show();
                    } else {
                        ui->Ajouter->setEnabled(true);  // Enable "Add" even if no face detected (allows retry)
                        facedetected = true;  // Reset the flag to ensure future detection works correctly
                        ui->checkicon->show();
                        ui->checkicon_2->hide();
                        ui->btn_face_detection->hide();
+                       ui->label_13->show();
                    }
                } else {
                    ui->Ajouter->setEnabled(true);  // Re-enable button even if the process fails
@@ -581,6 +584,7 @@ void gestion_candidats::on_btn_start_face_detection_clicked()
                    ui->checkicon->show();
                    ui->checkicon_2->hide();
                    ui->btn_face_detection->hide();
+                   ui->label_13->show();
                }
            }
        );
