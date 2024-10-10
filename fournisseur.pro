@@ -44,3 +44,6 @@ CONFIG += console
 
 RESOURCES += \
     resources.qrc
+
+DISTFILES += \
+    face_recognition.py

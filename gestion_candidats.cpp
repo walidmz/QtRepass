@@ -16,18 +16,23 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include<QChartView>
+#include<QProcess>
 
 
 
 gestion_candidats::gestion_candidats(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::gestion_candidats)
+    ui(new Ui::gestion_candidats),
+  pythonProcess(new QProcess(this)) // Initialize the QProcess here
+
 {
     ui->setupUi(this);
         ui->tableView_candidats->setModel((candidat.readAll()));
         ui->tableView_offres->setModel((offreEmploi.readAll()));
         ui->stackedWidget->setCurrentIndex(0); // Change this index as needed
         populateOffreEmploiList();
+        ui->btn_stop_camera->hide();
+        ui->checkicon->hide();
         // Connect the button signal to the slot
         connect(ui->tableView_candidats, &QTableView::activated, this, &gestion_candidats::on_tableView_activated);
         connect(ui->tableView_offres, &QTableView::activated, this, &gestion_candidats::on_tableView_offres_activated);
@@ -35,6 +40,8 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         connect(ui->btn_supprimer_candidat, SIGNAL(clicked()), this, SLOT(on_Supprimer_clicked()));
         connect(ui->btn_supprimer_candidat_2, SIGNAL(clicked()), this, SLOT(on_Supprimer_offre_clicked()));
         connect(ui->btn_modifier_candidat_2, SIGNAL(clicked()), this, SLOT(on_Modifier_offre_clicked()));
+        connect(ui->btn_face_detection, SIGNAL(clicked()), this, SLOT(on_btn_start_face_detection_clicked()));
+
         connect(ui->btn_recherche, SIGNAL(clicked()), this, SLOT(on_recherche_clicked()));
         connect(ui->btn_tri_nom, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_nom_clicked()));
         connect(ui->btn_tri_id, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_id_clicked()));
@@ -149,6 +156,11 @@ void gestion_candidats::on_Ajouter_clicked()
         errorMsg += "Veuillez entrer une adresse e-mail valide.\n";
     }
 
+    if (!facedetected) {
+           QMessageBox::critical(this, "Erreur", "No Face Detected!");
+           return;  // Prevent the user from adding the candidate if no face is detected
+       }
+
     // Validate Age: Between 18 and 30
     int currentYear = QDate::currentDate().year();
     int birthYear = dateNaissance.year();
@@ -185,7 +197,7 @@ void gestion_candidats::on_Ajouter_clicked()
                                           "Click Cancel to exit."), QMessageBox::Cancel);
     }
 
-    populateOffreEmploiList();
+    populateCandidatsList();
     // Clear the form fields
     ui->lineEdit_EMAIL->clear();
     ui->lineEdit_NOM->clear();
@@ -228,6 +240,7 @@ void gestion_candidats::on_Supprimer_clicked()
             QMessageBox::critical(nullptr,QObject::tr("Not OK"),
                                      QObject::tr("Suppression non effectué\n"
                                                  "Click Cancel to exit."),QMessageBox::Cancel);
+        populateCandidatsList();
       ui->lineEdit_CIN2->clear();
       ui->lineEdit_NOM2->clear();
       ui->lineEdit_PRENOM2->clear();
@@ -514,25 +527,132 @@ void gestion_candidats::on_statistique_clicked()
 
 void gestion_candidats::start_camera()
 {
+    // Start the camera
     M_Camera->start();
+
+}
+
+void gestion_candidats::on_btn_start_face_detection_clicked()
+{
+    // Disable the "Add" button while face detection is running
+    ui->Ajouter->setEnabled(false);
+
+    // Check if Python process is already running
+    if (pythonProcess->state() == QProcess::Running) {
+        pythonProcess->terminate();  // Terminate the old process if running
+        pythonProcess->waitForFinished();
+    }
+
+    // Start the Python face recognition script in a new window
+    QStringList args;
+    args << "C:/Users/walid/Documents/GitHub/QtRepass/face_recognition.py";
+
+    pythonProcess->setProgram("python");
+    pythonProcess->setArguments(args);
+
+    // Set to start in a separate window (command prompt window)
+    pythonProcess->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args){
+        args->flags |= CREATE_NEW_CONSOLE;  // Create new console window for Python script
+    });
+
+    pythonProcess->start();
+
+    // Connect signals to handle output and error
+    connect(pythonProcess, &QProcess::readyReadStandardOutput, this, &gestion_candidats::handlePythonOutput);
+    connect(pythonProcess, &QProcess::readyReadStandardError, this, &gestion_candidats::handlePythonError);
+    connect(pythonProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+           this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
+               if (exitStatus == QProcess::NormalExit) {
+                   if (facedetected) {
+                       ui->Ajouter->setEnabled(true);  // Enable "Add" button if a face was detected
+                       ui->checkicon->show();
+                       ui->checkicon_2->hide();
+                       ui->btn_face_detection->hide();
+                   } else {
+                       ui->Ajouter->setEnabled(true);  // Enable "Add" even if no face detected (allows retry)
+                       facedetected = true;  // Reset the flag to ensure future detection works correctly
+                       ui->checkicon->show();
+                       ui->checkicon_2->hide();
+                       ui->btn_face_detection->hide();
+                   }
+               } else {
+                   ui->Ajouter->setEnabled(true);  // Re-enable button even if the process fails
+                   facedetected = true;  // Reset the flag
+                   ui->checkicon->show();
+                   ui->checkicon_2->hide();
+                   ui->btn_face_detection->hide();
+               }
+           }
+       );
+}
+
+void gestion_candidats::handlePythonOutput()
+{
+    QString output = pythonProcess->readAllStandardOutput();
+    qDebug() << "Python Output:" << output;
+
+    // Check if the output contains information about face detection
+    if (output.contains("Faces detected:")) {
+        QString faceCountStr = output.split("Faces detected: ").last().split("\n").first();
+        qDebug() << "Extracted face count string:" << faceCountStr;
+
+        int faceCount = faceCountStr.toInt();
+
+        // Update the `facedetected` variable based on the output
+        if (faceCount > 0) {
+            facedetected = true;  // Set to true if a face is detected
+            qDebug() << "Face detected, setting facedetected to true.";
+        } else {
+            facedetected = false;  // Set to false if no face is detected
+            qDebug() << "No face detected, setting facedetected to false.";
+        }
+    }
+}
+
+void gestion_candidats::handlePythonError()
+{
+    QString errorOutput = pythonProcess->readAllStandardError();
+    qDebug() << "Python Error:" << errorOutput;
 }
 
 void gestion_candidats::stop_camera()
 {
+    // Stop the camera
     M_Camera->stop();
+
+
 }
+
+
+
+void gestion_candidats::on_python_process_finished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    qDebug() << "Python process finished with exit code:" << exitCode;
+    if (exitCode != 0) {
+        qDebug() << "Python process exited with an error";
+    } else {
+        qDebug() << "Python process completed successfully";
+    }
+}
+
 
 
 void gestion_candidats::on_btn_start_camera_clicked()
 {
+    ui->btn_stop_camera->show();
+    ui->btn_start_camera->hide();
     start_camera();
 }
 
 void gestion_candidats::on_btn_stop_camera_clicked()
 {
+    ui->btn_start_camera->show();
+    ui->btn_stop_camera->hide();
     stop_camera();
 
 }
+
+
 
 void gestion_candidats::on_sendEmailButton_clicked() {}
 
@@ -632,6 +752,7 @@ void gestion_candidats::on_Supprimer_offre_clicked()
             QMessageBox::critical(nullptr,QObject::tr("Not OK"),
                                      QObject::tr("Suppression non effectué\n"
                                                  "Click Cancel to exit."),QMessageBox::Cancel);
+    populateOffreEmploiList();
       ui->lineEdit_TITRE_2->clear();
       ui->lineEdit_DESCRIPTION_2->clear();
       ui->lineEdit_ENTREPRISE_2->clear();
@@ -1133,7 +1254,6 @@ void gestion_candidats::populateCandidatsList()
 
     while (query.next()) {
         QString candidatId = query.value(0).toString();
-        qDebug() << "Retrieved candidate ID:" << candidatId;
 
         // Create a new list widget item with a checkbox
         QListWidgetItem *item = new QListWidgetItem(candidatId);
@@ -1142,7 +1262,6 @@ void gestion_candidats::populateCandidatsList()
         ui->listWidget_candidats->addItem(item);
     }
 
-    qDebug() << "Successfully populated candidates list with IDs.";
 }
 
 
