@@ -23,7 +23,7 @@
 gestion_candidats::gestion_candidats(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::gestion_candidats),
-  pythonProcess(new QProcess(this)) // Initialize the QProcess here
+  pythonProcess(new QProcess(this))// Initialize the QProcess here
 
 {
     ui->setupUi(this);
@@ -44,9 +44,6 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         connect(ui->btn_face_detection, SIGNAL(clicked()), this, SLOT(on_btn_start_face_detection_clicked()));
 
         connect(ui->btn_recherche, SIGNAL(clicked()), this, SLOT(on_recherche_clicked()));
-        connect(ui->btn_tri_nom, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_nom_clicked()));
-        connect(ui->btn_tri_id, SIGNAL(clicked()), this, SLOT(on_pushButton_tri_id_clicked()));
-        connect(ui->btn_tri_date, SIGNAL(clicked()), this, SLOT(on_tri_date_clicked()));
         connect(ui->btn_imprimer_candidat,SIGNAL(clicked()),this,SLOT(on_inprimer_clicked()));
 
         connect(ui->label_reset,SIGNAL(clicked()),this,SLOT(reset()));
@@ -70,9 +67,6 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
 
 
         connect(ui->btn_recherche_offre, SIGNAL(clicked()), this, SLOT(on_recherche_offre_clicked()));
-        connect(ui->btn_tri_titre, SIGNAL(clicked()), this, SLOT(on_tri_titre_clicked()));
-        connect(ui->btn_tri_date_expiration, SIGNAL(clicked()), this, SLOT(on_tri_dateexpiration_clicked()));
-        connect(ui->btn_tri_entreprise, SIGNAL(clicked()), this, SLOT(on_tri_Entreprise_clicked()));
         connect(ui->btn_statistique_candidat_2,SIGNAL(clicked()),this,SLOT(on_statistique_offre_clicked()));
         connect(ui->buttonUpdateCandidats, &QPushButton::clicked, this, &gestion_candidats::on_updateCandidatsButtonClicked);
 
@@ -83,8 +77,7 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
                          << "Nabeul" << "Sfax" << "Sidi Bouzid" << "Siliana"
                          << "Souk Ahras" << "Tataouine" << "Tozeur" << "Tunis";
 
-           // Populate the QComboBox with the governorates
-           ui->comboBox->addItems(gouvernorates); // Replace comboBox_LIEU with your QComboBox object name
+           ui->comboBox->addItems(gouvernorates);
            ui->comboBox_2->addItems(gouvernorates);
 
         for(const QCameraInfo &infor : QCameraInfo::availableCameras())
@@ -96,6 +89,10 @@ gestion_candidats::gestion_candidats(QWidget *parent) :
         M_Camera->setViewfinder(ui->camera_view);
 
         populateCandidatsList();
+        connect(ui->comboBox_tri, SIGNAL(currentIndexChanged(int)), this, SLOT(onComboBoxItemChanged(int)));
+        connect(ui->comboBox_tri_2, SIGNAL(currentIndexChanged(int)), this, SLOT(onComboBox2ItemChanged(int)));
+
+
 
 
 
@@ -114,7 +111,46 @@ void gestion_candidats::resetoffres()
 {
     ui->tableView_offres->setModel((offreEmploi.readAll()));
 }
+void gestion_candidats::onComboBoxItemChanged(int index) {
+    switch (index) {
+            case 0:
+                ui->tableView_candidats->setModel((candidat.readAll())); // Call function when index 0 is selected
+                break;
+            case 1:
+                on_pushButton_tri_id_clicked();  // Call function when index 1 is selected
+                break;
+            case 2:
+                on_pushButton_tri_nom_clicked();  // Call function when index 2 is selected
+                break;
+            case 3:
+                on_tri_date_clicked();  // Call function when index 3 is selected
+                break;
+            default:
+                ui->tableView_candidats->setModel((candidat.readAll()));
+                break;
+        }
+}
 
+
+void gestion_candidats::onComboBox2ItemChanged(int index) {
+    switch (index) {
+            case 0:
+                ui->tableView_offres->setModel((offreEmploi.readAll())); // Call function when index 0 is selected
+                break;
+            case 1:
+                on_tri_titre_clicked();  // Call function when index 1 is selected
+                break;
+            case 2:
+                on_tri_Entreprise_clicked();  // Call function when index 2 is selected
+                break;
+            case 3:
+                on_tri_dateexpiration_clicked();  // Call function when index 3 is selected
+                break;
+            default:
+                ui->tableView_offres->setModel((offreEmploi.readAll()));
+                break;
+        }
+}
 
 void gestion_candidats::on_Ajouter_clicked()
 {
@@ -127,62 +163,78 @@ void gestion_candidats::on_Ajouter_clicked()
 
     // Initialize an empty string for error messages
     QString errorMsg = "";
-
-    // Validate CIN: 8 digits only
     QRegExp cinRegex("\\d{8}");
-    if (!cinRegex.exactMatch(cin)) {
-        errorMsg += "Le CIN doit contenir exactement 8 chiffres.\n";
-    }
-
-    // Validate Telephone: 8 digits only
     QRegExp telRegex("\\d{8}");
-    if (!telRegex.exactMatch(telephone)) {
-        errorMsg += "Le numéro de téléphone doit contenir exactement 8 chiffres.\n";
-    }
-
-    // Validate Nom: Letters only
     QRegExp nameRegex("^[A-Za-zÀ-ÿ]+$");
-    if (!nameRegex.exactMatch(nom)) {
-        errorMsg += "Le nom doit contenir uniquement des lettres.\n";
-    }
-
-    // Validate Prenom: Letters only
-    if (!nameRegex.exactMatch(prenom)) {
-        errorMsg += "Le prénom doit contenir uniquement des lettres.\n";
-    }
-
-    // Validate Email: Basic email format
     QRegExp emailRegex("^[\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,}$");
-    if (!emailRegex.exactMatch(email)) {
-        errorMsg += "Veuillez entrer une adresse e-mail valide.\n";
-    }
+    QRegExp containsLettersRegex("[a-zA-Z]");
 
-    if (!facedetected) {
-           QMessageBox::critical(this, "Erreur", "No Face Detected!");
-           return;  // Prevent the user from adding the candidate if no face is detected
-       }
-
-    // Validate Age: Between 18 and 30
     int currentYear = QDate::currentDate().year();
     int birthYear = dateNaissance.year();
     int age = currentYear - birthYear;
 
-    // Adjust for the exact day of birth not yet occurring in the current year
-    if (QDate::currentDate() < dateNaissance.addYears(age)) {
-        age--;
+    // Validate Face detection
+    if (!facedetected) {
+        QMessageBox::critical(this, "Erreur", "Aucun visage détecté !");
+        return;  // Prevent the user from adding the candidate if no face is detected
+    } else {
+        // Check if any field is empty
+        if (cin.isEmpty()) {
+            errorMsg += "Le champ CIN est vide.\n";
+        } else if (containsLettersRegex.indexIn(cin) != -1) {
+            errorMsg += "Le CIN ne doit contenir que des chiffres.\n";
+        } else if (!cinRegex.exactMatch(cin)) {
+            errorMsg += "Le CIN doit contenir exactement 8 chiffres.\n";
+        }
+        if (nom.isEmpty()) {
+            errorMsg += "Le champ Nom est vide.\n";
+        } else if (!nameRegex.exactMatch(nom)) {
+            errorMsg += "Le nom doit contenir uniquement des lettres.\n";
+        }
+        if (prenom.isEmpty()) {
+            errorMsg += "Le champ Prénom est vide.\n";
+        } else  if (!nameRegex.exactMatch(nom)) {
+            errorMsg += "Le nom doit contenir uniquement des lettres.\n";
+        }
+        if (email.isEmpty()) {
+            errorMsg += "Le champ Email est vide.\n";
+        } else if (!emailRegex.exactMatch(email)) {
+            errorMsg += "Veuillez entrer une adresse e-mail valide.\n";
+        }
+        if (telephone.isEmpty()) {
+            errorMsg += "Le champ Téléphone est vide.\n";
+        } else if (containsLettersRegex.indexIn(telephone) != -1) {
+            errorMsg += "Le Numéro de telephone ne doit contenir que des chiffres.\n";
+        } else if (!telRegex.exactMatch(telephone)) {
+            errorMsg += "Le numéro de téléphone doit contenir exactement 8 chiffres.\n";
+        }
+        if (QDate::currentDate() < dateNaissance.addYears(age)) {
+            age--;
+        }
+        if (!dateNaissance.isValid()) {
+            errorMsg += "La date de naissance est invalide.\n";
+        } else  if (age < 18) {
+            errorMsg += "Le candidat est âgé(e) de moins de 18 ans.\n";
+                } else if (age > 30) {
+                    errorMsg += "Le candidat est âgé(e) de plus de 30 ans.\n";
+                    }
+
+
+        // If any field is empty, show an error message and return
+        if (!errorMsg.isEmpty()) {
+            QMessageBox::critical(this, "Erreur", errorMsg);
+            return;
+        }
+
+
+        // If there are errors, show them in a message box and return
+        if (!errorMsg.isEmpty()) {
+            QMessageBox::critical(this, "Erreur", errorMsg);
+            return;
+        }
     }
 
-    if (age < 18) {
-        errorMsg += "Le candidat est âgé(e) de moins de 18 ans.\n";
-    } else if (age > 30) {
-        errorMsg += "Le candidat est âgé(e) de plus de 30 ans.\n";
-    }
 
-    // If there are errors, show them in a message box and return
-    if (!errorMsg.isEmpty()) {
-        QMessageBox::critical(this, "Erreur", errorMsg);
-        return;
-    }
 
     // Create the Candidat if all validations pass
     Candidat candidat(nom, prenom, email, cin, dateNaissance, telephone.toInt());
@@ -199,14 +251,16 @@ void gestion_candidats::on_Ajouter_clicked()
     }
 
     populateCandidatsList();
+
     // Clear the form fields
-    ui->lineEdit_EMAIL->clear();
+    ui->lineEdit_CIN->clear();
     ui->lineEdit_NOM->clear();
     ui->lineEdit_PRENOM->clear();
     ui->lineEdit_EMAIL->clear();
     ui->dateEdit->clear();
     ui->lineEdit_TELEPHONE->clear();
 }
+
 
 
 

@@ -28,6 +28,8 @@ public:
 
 
 private slots:
+    void onComboBoxItemChanged(int index); // Slot to handle item change
+    void onComboBox2ItemChanged(int index);
     void populateOffreEmploiList();
     void on_python_process_finished(int exitCode, QProcess::ExitStatus exitStatus);
     void handlePythonError();
@@ -86,6 +88,7 @@ private:
     QScopedPointer<QProcess> faceRecognitionProcess;
     QProcess *pythonProcess; // New member variable
     bool facedetected = false;
+    QComboBox *comboBoxtri;
 
 
 
